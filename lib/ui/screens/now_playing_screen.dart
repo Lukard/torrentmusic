@@ -177,7 +177,14 @@ class NowPlayingScreen extends ConsumerWidget {
     AsyncValue<TorrentStatus> torrentStatusAsync,
   ) {
     return torrentStatusAsync.when(
-      loading: () => const SizedBox.shrink(),
+      loading: () => ClipRRect(
+        borderRadius: BorderRadius.circular(2),
+        child: const LinearProgressIndicator(
+          minHeight: 3,
+          backgroundColor: AppColors.surfaceVariant,
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.accentLight),
+        ),
+      ),
       error: (_, __) => const SizedBox.shrink(),
       data: (status) {
         if (status.state == TorrentState.complete ||

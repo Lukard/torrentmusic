@@ -111,6 +111,9 @@ class PlaybackOrchestrator {
       final infoHash = await engine.addMagnet(result.magnetUri);
       final updatedTrack = track.copyWith(id: infoHash);
 
+      // Subscribe to torrent status updates early to capture all events.
+      watchTorrentStatus(infoHash);
+
       emitPreparation(
         updatedTrack,
         PlaybackPreparationState.resolvingMetadata,
@@ -129,9 +132,6 @@ class PlaybackOrchestrator {
         filePath: filePath,
         fileIndex: fileIndex,
       );
-
-      // Subscribe to torrent status updates.
-      watchTorrentStatus(infoHash);
 
       // Wait for enough buffer to start playback.
       await waitForBuffer(infoHash, fileIndex);
@@ -163,6 +163,10 @@ class PlaybackOrchestrator {
 
     try {
       final infoHash = await engine.addMagnet(result.magnetUri);
+
+      // Subscribe to torrent status updates early to capture all events.
+      watchTorrentStatus(infoHash);
+
       final files = await engine.listFiles(infoHash);
       final fileIndex = pickAudioFile(files);
       final filePath = await engine.startStreaming(infoHash, fileIndex);
@@ -172,8 +176,6 @@ class PlaybackOrchestrator {
         filePath: filePath,
         fileIndex: fileIndex,
       );
-
-      watchTorrentStatus(infoHash);
 
       final isQueueEmpty = playerService.queueState.tracks.isEmpty;
       playerService.addToQueue(trackWithPath);

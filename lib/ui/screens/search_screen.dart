@@ -64,7 +64,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final orchestrator = ref.read(playbackOrchestratorProvider);
     try {
       await orchestrator.playSearchResult(result);
-    } on Exception catch (e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -88,7 +88,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
         );
       }
-    } on Exception catch (e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
