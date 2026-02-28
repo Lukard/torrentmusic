@@ -141,10 +141,15 @@ class Aria2Engine implements TorrentEngine {
 
   @override
   Future<String> startStreaming(String infoHash, int fileIndex) async {
-    final gid = await _resolveGid(infoHash);
+    // Validate file index before sending RPC call.
+    final files = await listFiles(infoHash);
+    if (fileIndex < 0 || fileIndex >= files.length) {
+      throw RangeError('File index $fileIndex out of range');
+    }
 
     // Select only the target file and prioritize its head pieces.
     // aria2 uses 1-based file indexing.
+    final gid = await _resolveGid(infoHash);
     await _rpcCall('aria2.changeOption', [
       gid,
       {
@@ -153,10 +158,6 @@ class Aria2Engine implements TorrentEngine {
       },
     ]);
 
-    final files = await listFiles(infoHash);
-    if (fileIndex < 0 || fileIndex >= files.length) {
-      throw RangeError('File index $fileIndex out of range');
-    }
     return files[fileIndex].path;
   }
 

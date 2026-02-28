@@ -280,6 +280,97 @@ void main() {
 
       expect(rpcLog.any((r) => r['method'] == 'aria2.unpause'), isTrue);
     });
+
+    test('startStreaming validates index and returns file path', () async {
+      final client = buildMockClient((method, params) {
+        if (method == 'aria2.addUri') return {'result': 'gid-007'};
+        if (method == 'aria2.tellStatus') {
+          return {
+            'result': {'status': 'active', 'totalLength': '5000000'},
+          };
+        }
+        if (method == 'aria2.getFiles') {
+          return {
+            'result': [
+              {'path': '/tmp/song.mp3', 'length': '5000000'},
+            ],
+          };
+        }
+        if (method == 'aria2.changeOption') return {'result': 'OK'};
+        return {'result': 'ok'};
+      });
+
+      final engine = Aria2Engine(rpcPort: 16808, httpClient: client);
+      await engine.addMagnet('magnet:?xt=urn:btih:HASH5&dn=test');
+
+      final path = await engine.startStreaming('hash5', 0);
+      expect(path, '/tmp/song.mp3');
+      expect(
+        rpcLog.any((r) => r['method'] == 'aria2.changeOption'),
+        isTrue,
+      );
+    });
+
+    test('startStreaming throws RangeError for invalid index', () async {
+      final client = buildMockClient((method, params) {
+        if (method == 'aria2.addUri') return {'result': 'gid-008'};
+        if (method == 'aria2.tellStatus') {
+          return {
+            'result': {'status': 'active', 'totalLength': '5000000'},
+          };
+        }
+        if (method == 'aria2.getFiles') {
+          return {
+            'result': [
+              {'path': '/tmp/song.mp3', 'length': '5000000'},
+            ],
+          };
+        }
+        return {'result': 'ok'};
+      });
+
+      final engine = Aria2Engine(rpcPort: 16809, httpClient: client);
+      await engine.addMagnet('magnet:?xt=urn:btih:HASH6&dn=test');
+
+      expect(
+        () => engine.startStreaming('hash6', 5),
+        throwsA(isA<RangeError>()),
+      );
+      // changeOption should NOT have been called (validation first).
+      expect(
+        rpcLog.any((r) => r['method'] == 'aria2.changeOption'),
+        isFalse,
+      );
+    });
+
+    test('remove sends aria2.remove and cleans up state', () async {
+      final client = buildMockClient((method, params) {
+        if (method == 'aria2.addUri') return {'result': 'gid-009'};
+        if (method == 'aria2.tellStatus') {
+          return {
+            'result': {'status': 'active', 'totalLength': '100'},
+          };
+        }
+        if (method == 'aria2.remove') return {'result': 'gid-009'};
+        return {'result': 'ok'};
+      });
+
+      final engine = Aria2Engine(rpcPort: 16810, httpClient: client);
+      await engine.addMagnet('magnet:?xt=urn:btih:HASH7&dn=test');
+
+      // Create a status watcher so we can verify it gets closed.
+      final stream = engine.watchStatus('hash7');
+      expect(stream.isBroadcast, isTrue);
+
+      await engine.remove('hash7');
+      expect(rpcLog.any((r) => r['method'] == 'aria2.remove'), isTrue);
+
+      // After removal, the engine should not know about this hash.
+      expect(
+        () => engine.pause('hash7'),
+        throwsA(isA<StateError>()),
+      );
+    });
   });
 
   // ---------------------------------------------------------------------------
