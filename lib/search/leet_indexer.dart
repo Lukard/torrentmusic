@@ -51,6 +51,9 @@ class LeetIndexer {
   /// Maximum number of detail pages fetched per search.
   static const int _maxDetailFetches = 20;
 
+  /// Timeout applied to each HTTP request.
+  static const _requestTimeout = Duration(seconds: 15);
+
   /// Search 1337x for music torrents matching [query].
   Future<List<SearchResult>> search(String query) async {
     final encoded = Uri.encodeComponent(query);
@@ -58,7 +61,7 @@ class LeetIndexer {
 
     final http.Response response;
     try {
-      response = await _client.get(Uri.parse(url));
+      response = await _client.get(Uri.parse(url)).timeout(_requestTimeout);
     } on Exception {
       return [];
     }
@@ -97,7 +100,7 @@ class LeetIndexer {
 
     final http.Response response;
     try {
-      response = await _client.get(Uri.parse(url));
+      response = await _client.get(Uri.parse(url)).timeout(_requestTimeout);
     } on Exception {
       return null;
     }

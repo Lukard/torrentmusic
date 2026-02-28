@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:torrentmusic/search/leet_indexer.dart';
 import 'package:torrentmusic/search/search_result.dart';
 import 'package:torrentmusic/search/search_service.dart';
@@ -181,6 +183,102 @@ void main() {
         ),
         isFalse,
       );
+    });
+
+    test('rejects video resolution indicators', () {
+      expect(
+        TorrentSearchService.isAudioContent(
+          makeResult('Concert.1080p.BluRay'),
+        ),
+        isFalse,
+      );
+      expect(
+        TorrentSearchService.isAudioContent(
+          makeResult('Live.Show.720p.WEB'),
+        ),
+        isFalse,
+      );
+      expect(
+        TorrentSearchService.isAudioContent(
+          makeResult('Performance.2160p.HDR'),
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('LeetIndexer.search (integration)', () {
+    test('returns assembled SearchResults from mock HTTP', () async {
+      final client = MockClient((request) async {
+        if (request.url.path.contains('category-search')) {
+          return http.Response(_searchPageHtml, 200);
+        }
+        if (request.url.path.contains('/torrent/')) {
+          return http.Response(_detailPageHtml, 200);
+        }
+        return http.Response('Not found', 404);
+      });
+
+      final indexer = LeetIndexer(
+        client: client,
+        baseUrl: 'https://1337x.to',
+      );
+      final results = await indexer.search('pink floyd');
+
+      expect(results, hasLength(2));
+      expect(results[0].title, 'Pink Floyd - The Wall [FLAC]');
+      expect(results[0].magnetUri, startsWith('magnet:?xt=urn:btih:'));
+      expect(results[0].source, '1337x');
+      expect(results[0].category, 'Music');
+      expect(results[0].seeds, 150);
+      expect(results[1].title, 'Pink Floyd - DSOTM [MP3 320]');
+    });
+
+    test('returns empty list on HTTP error', () async {
+      final client = MockClient(
+        (_) async => http.Response('Server Error', 500),
+      );
+
+      final indexer = LeetIndexer(
+        client: client,
+        baseUrl: 'https://1337x.to',
+      );
+      final results = await indexer.search('test');
+
+      expect(results, isEmpty);
+    });
+
+    test('returns empty list on network exception', () async {
+      final client = MockClient((_) => throw Exception('no internet'));
+
+      final indexer = LeetIndexer(
+        client: client,
+        baseUrl: 'https://1337x.to',
+      );
+      final results = await indexer.search('test');
+
+      expect(results, isEmpty);
+    });
+
+    test('skips results when detail page has no magnet link', () async {
+      final client = MockClient((request) async {
+        if (request.url.path.contains('category-search')) {
+          return http.Response(_searchPageHtml, 200);
+        }
+        // Detail pages return HTML without a magnet link.
+        return http.Response(
+          '<html><body><a href="/other">x</a></body></html>',
+          200,
+        );
+      });
+
+      final indexer = LeetIndexer(
+        client: client,
+        baseUrl: 'https://1337x.to',
+      );
+      final results = await indexer.search('pink floyd');
+
+      expect(results, isEmpty);
     });
   });
 }
