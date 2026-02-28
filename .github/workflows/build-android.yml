@@ -21,19 +21,33 @@ jobs:
           flutter-version: '3.22.3'
           channel: 'stable'
 
-      - name: Fix Android SDK platform
+      - name: Setup Android SDK
         run: |
-          # Remove corrupted android-35 and reinstall
           rm -rf $ANDROID_HOME/platforms/android-35
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0" 2>/dev/null || true
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
 
-      - name: Accept Android licenses
-        run: yes | flutter doctor --android-licenses 2>/dev/null || true
+      - name: Override sqlite3 compileSdk
+        run: |
+          # Force sqlite3_flutter_libs to compile against SDK 34
+          mkdir -p android/app
+          cat >> android/app/build.gradle << 'EOF'
+          
+          configurations.all {
+              resolutionStrategy.eachDependency { details ->
+                  if (details.requested.group == 'com.android.tools.build') {
+                      details.useVersion '8.1.0'
+                  }
+              }
+          }
+          EOF
 
       - name: Get dependencies
         run: flutter pub get
 
       - name: Build APK
+        env:
+          ANDROID_COMPILE_SDK: "34"
         run: flutter build apk --release
 
       - name: Upload APK
