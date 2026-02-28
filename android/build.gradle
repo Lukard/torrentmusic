@@ -16,3 +16,10 @@ subprojects {
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
+
+// Force all subprojects (including sqlite3_flutter_libs) to use compileSdk 34
+subprojects { sub ->
+    sub.plugins.withId("com.android.library") {
+        sub.android.compileSdkVersion 34
+    }
+}
