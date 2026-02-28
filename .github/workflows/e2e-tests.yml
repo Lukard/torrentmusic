@@ -26,7 +26,7 @@ jobs:
 
   integration-tests:
     name: Integration Tests (Android)
-    runs-on: ubuntu-latest
+    runs-on: macos-13
     needs: unit-tests
     steps:
       - uses: actions/checkout@v4
@@ -47,9 +47,8 @@ jobs:
       - name: Run integration tests on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: 33
           arch: x86_64
-          profile: Nexus 6
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
-          script: flutter test integration_test/app_test.dart
+          script: flutter test integration_test/app_test.dart --timeout 300s
