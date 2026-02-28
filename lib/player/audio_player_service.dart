@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show protected, visibleForTesting;
 import 'package:just_audio/just_audio.dart';
 
 import 'track.dart';
@@ -155,7 +156,7 @@ class AudioPlayerService {
     _currentIndex = startIndex.clamp(0, tracks.length - 1);
     _rebuildShuffleOrder();
     _emitQueueState();
-    await _playCurrentTrack();
+    await playCurrentTrack();
   }
 
   /// Play a single track, replacing the queue with just that track.
@@ -216,7 +217,7 @@ class AudioPlayerService {
     }
     _currentIndex = nextIndex;
     _emitQueueState();
-    await _playCurrentTrack();
+    await playCurrentTrack();
   }
 
   /// Skip to the previous track.
@@ -225,7 +226,7 @@ class AudioPlayerService {
   /// instead of going to the previous one.
   Future<void> skipToPrevious() async {
     if (_queue.isEmpty) return;
-    if (_player.position.inSeconds > 3) {
+    if (position.inSeconds > 3) {
       await seek(Duration.zero);
       return;
     }
@@ -236,7 +237,7 @@ class AudioPlayerService {
     }
     _currentIndex = prevIndex;
     _emitQueueState();
-    await _playCurrentTrack();
+    await playCurrentTrack();
   }
 
   /// Jump to a specific index in the queue.
@@ -244,7 +245,7 @@ class AudioPlayerService {
     if (index < 0 || index >= _queue.length) return;
     _currentIndex = index;
     _emitQueueState();
-    await _playCurrentTrack();
+    await playCurrentTrack();
   }
 
   // ---------------------------------------------------------------------------
@@ -281,7 +282,11 @@ class AudioPlayerService {
   // Internals
   // ---------------------------------------------------------------------------
 
-  Future<void> _playCurrentTrack() async {
+  /// Load and play the track at [_currentIndex]. Subclasses may override
+  /// to avoid real audio decoding (e.g. in integration tests).
+  @protected
+  @visibleForTesting
+  Future<void> playCurrentTrack() async {
     if (_currentIndex < 0 || _currentIndex >= _queue.length) return;
     final track = _queue[_currentIndex];
     if (track.filePath == null) return;

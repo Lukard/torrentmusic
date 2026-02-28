@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import '../mocks/mock_audio_player_service.dart';
 import '../mocks/mock_search_service.dart';
 import '../mocks/mock_torrent_engine.dart';
 import '../robots/navigation_robot.dart';
@@ -11,10 +12,12 @@ import '../test_helpers.dart';
 void queueFlowTests() {
   late MockTorrentEngine mockEngine;
   late MockSearchService mockSearch;
+  late MockAudioPlayerService mockPlayerService;
 
   setUp(() {
     mockEngine = TestHelpers.createMockEngine();
     mockSearch = TestHelpers.createMockSearch();
+    mockPlayerService = MockAudioPlayerService();
   });
 
   /// Helper: search, play first, and add second to queue.
@@ -34,6 +37,7 @@ void queueFlowTests() {
       tester,
       mockEngine: mockEngine,
       mockSearch: mockSearch,
+      mockPlayerService: mockPlayerService,
     );
 
     final search = SearchRobot(tester);
@@ -55,6 +59,7 @@ void queueFlowTests() {
       tester,
       mockEngine: mockEngine,
       mockSearch: mockSearch,
+      mockPlayerService: mockPlayerService,
     );
 
     await setupQueue(tester);
@@ -80,6 +85,7 @@ void queueFlowTests() {
       tester,
       mockEngine: mockEngine,
       mockSearch: mockSearch,
+      mockPlayerService: mockPlayerService,
     );
 
     await setupQueue(tester);
@@ -103,6 +109,7 @@ void queueFlowTests() {
       tester,
       mockEngine: mockEngine,
       mockSearch: mockSearch,
+      mockPlayerService: mockPlayerService,
     );
 
     await setupQueue(tester);
@@ -129,6 +136,7 @@ void queueFlowTests() {
       tester,
       mockEngine: mockEngine,
       mockSearch: mockSearch,
+      mockPlayerService: mockPlayerService,
     );
 
     await setupQueue(tester);
