@@ -16,9 +16,10 @@ class MiniPlayer extends ConsumerWidget {
     final track = player.currentTrack;
     if (track == null) return const SizedBox.shrink();
 
-    final progress = player.duration.inMilliseconds > 0
-        ? player.position.inMilliseconds / player.duration.inMilliseconds
-        : 0.0;
+    final progress = (player.duration.inMilliseconds > 0
+            ? player.position.inMilliseconds / player.duration.inMilliseconds
+            : 0.0)
+        .clamp(0.0, 1.0);
 
     return GestureDetector(
       onTap: onTap,
@@ -91,12 +92,14 @@ class MiniPlayer extends ConsumerWidget {
                           : Icons.play_arrow_rounded,
                       size: 28,
                     ),
+                    tooltip: player.isPlaying ? 'Pause' : 'Play',
                     onPressed: () {
                       ref.read(playerProvider.notifier).togglePlayPause();
                     },
                   ),
                   IconButton(
                     icon: const Icon(Icons.skip_next_rounded, size: 24),
+                    tooltip: 'Next track',
                     onPressed: () {
                       ref.read(playerProvider.notifier).skipNext();
                     },

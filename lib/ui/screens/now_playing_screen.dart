@@ -25,6 +25,7 @@ class NowPlayingScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 32),
+          tooltip: 'Dismiss',
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
@@ -144,15 +145,19 @@ class NowPlayingScreen extends ConsumerWidget {
     WidgetRef ref,
     PlayerState player,
   ) {
+    final maxMs = player.duration.inMilliseconds > 0
+        ? player.duration.inMilliseconds.toDouble()
+        : 1.0;
     return Column(
       children: [
         SliderTheme(
           data: Theme.of(context).sliderTheme,
           child: Slider(
-            value: player.position.inMilliseconds.toDouble(),
-            max: player.duration.inMilliseconds > 0
-                ? player.duration.inMilliseconds.toDouble()
-                : 1.0,
+            value: player.position.inMilliseconds.toDouble().clamp(0, maxMs),
+            max: maxMs,
+            semanticFormatterCallback: (value) {
+              return _formatDuration(Duration(milliseconds: value.toInt()));
+            },
             onChanged: (value) {
               ref
                   .read(playerProvider.notifier)
@@ -188,17 +193,20 @@ class NowPlayingScreen extends ConsumerWidget {
           icon: const Icon(Icons.shuffle_rounded),
           iconSize: 24,
           color: AppColors.onSurface,
+          tooltip: 'Shuffle',
           onPressed: () {},
         ),
         const SizedBox(width: 16),
         IconButton(
           icon: const Icon(Icons.skip_previous_rounded),
           iconSize: 36,
+          tooltip: 'Previous track',
           onPressed: () => ref.read(playerProvider.notifier).skipPrevious(),
         ),
         const SizedBox(width: 8),
         FloatingActionButton(
           backgroundColor: AppColors.accent,
+          tooltip: player.isPlaying ? 'Pause' : 'Play',
           onPressed: () => ref.read(playerProvider.notifier).togglePlayPause(),
           child: Icon(
             player.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
@@ -210,6 +218,7 @@ class NowPlayingScreen extends ConsumerWidget {
         IconButton(
           icon: const Icon(Icons.skip_next_rounded),
           iconSize: 36,
+          tooltip: 'Next track',
           onPressed: () => ref.read(playerProvider.notifier).skipNext(),
         ),
         const SizedBox(width: 16),
@@ -217,6 +226,7 @@ class NowPlayingScreen extends ConsumerWidget {
           icon: const Icon(Icons.repeat_rounded),
           iconSize: 24,
           color: AppColors.onSurface,
+          tooltip: 'Repeat',
           onPressed: () {},
         ),
       ],

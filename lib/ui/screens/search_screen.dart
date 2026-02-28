@@ -54,6 +54,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 suffixIcon: _controller.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear, color: AppColors.subtle),
+                        tooltip: 'Clear search',
                         onPressed: () {
                           _controller.clear();
                           ref.read(searchQueryProvider.notifier).state = '';

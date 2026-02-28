@@ -58,7 +58,12 @@ class SearchResultTile extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.arrow_upward, size: 12, color: AppColors.subtle),
+              const Icon(
+                Icons.arrow_upward,
+                size: 12,
+                color: AppColors.subtle,
+                semanticLabel: 'Seeds',
+              ),
               const SizedBox(width: 2),
               Text(
                 '${track.seeds}',
