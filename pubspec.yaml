@@ -43,6 +43,9 @@ dependencies:
   # Audio
   just_audio: ^0.9.40
 
+  # Riverpod annotations (used in source, not just build)
+  riverpod_annotation: ^2.3.5
+
   # Utilities
   path_provider: ^2.1.4
   http: ^1.2.2
@@ -55,7 +58,6 @@ dev_dependencies:
   flutter_lints: ^3.0.0
 
   # Riverpod code generation
-  riverpod_annotation: ^2.3.5
   riverpod_generator: ^2.4.0
   build_runner: ^2.4.11
 
