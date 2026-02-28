@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -20,25 +20,6 @@ jobs:
         with:
           flutter-version: '3.22.3'
           channel: 'stable'
-
-      - name: Fix Android SDK 35 corruption
-        run: |
-          # The android-35 jar is corrupted on GH runners. 
-          # We need to: 1) remove it, 2) block Gradle from reinstalling, 3) install clean copy
-          sudo rm -rf $ANDROID_HOME/platforms/android-35
-          # Download and install a clean android-35 platform
-          cd /tmp
-          wget -q "https://dl.google.com/android/repository/platform-35_r01.zip" -O platform-35.zip || true
-          if [ -f platform-35.zip ]; then
-            sudo mkdir -p $ANDROID_HOME/platforms/android-35
-            sudo unzip -qo platform-35.zip -d $ANDROID_HOME/platforms/android-35
-            # Move contents up if nested
-            if [ -d "$ANDROID_HOME/platforms/android-35/android-15" ]; then
-              sudo mv $ANDROID_HOME/platforms/android-35/android-15/* $ANDROID_HOME/platforms/android-35/
-              sudo rm -rf $ANDROID_HOME/platforms/android-35/android-15
-            fi
-          fi
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
 
       - run: flutter pub get
       - run: flutter build apk --release
