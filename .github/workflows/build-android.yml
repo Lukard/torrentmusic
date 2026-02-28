@@ -16,15 +16,13 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 11076708
-
-      - name: Install SDK components
+      - name: Purge corrupted Android SDK 35
         run: |
-          sdkmanager "platforms;android-34" "build-tools;34.0.0"
-          yes | sdkmanager --licenses 2>/dev/null || true
+          sudo rm -rf /usr/local/lib/android/sdk/platforms/android-35
+          sudo rm -rf /usr/local/lib/android/sdk/platforms/android-34
+          sudo $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
+          yes | sudo $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          ls -la $ANDROID_HOME/platforms/
 
       - uses: subosito/flutter-action@v2
         with:
@@ -32,7 +30,11 @@ jobs:
           channel: 'stable'
 
       - run: flutter pub get
-      - run: flutter build apk --release
+      
+      - name: Build APK
+        env:
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: flutter build apk --release
 
       - uses: actions/upload-artifact@v4
         with:
