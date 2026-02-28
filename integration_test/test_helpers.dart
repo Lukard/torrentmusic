@@ -31,7 +31,34 @@ class TestHelpers {
         child: const TorrentMusicApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpFor(tester, const Duration(seconds: 2));
+  }
+
+  /// Pumps frames for [duration], advancing 100 ms per frame.
+  /// Use instead of `pumpAndSettle()` to avoid hangs from continuous
+  /// animations or streams (mini player, now-playing progress, etc.).
+  static Future<void> pumpFor(
+    WidgetTester tester,
+    Duration duration,
+  ) async {
+    final end = DateTime.now().add(duration);
+    while (DateTime.now().isBefore(end)) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  }
+
+  /// Pumps frames until [finder] matches at least one widget, or [timeout]
+  /// elapses.
+  static Future<void> pumpUntilFound(
+    WidgetTester tester,
+    Finder finder, {
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
+    final end = DateTime.now().add(timeout);
+    while (DateTime.now().isBefore(end)) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (finder.evaluate().isNotEmpty) return;
+    }
   }
 
   /// Create default mock instances.

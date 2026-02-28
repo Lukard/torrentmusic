@@ -53,8 +53,7 @@ void errorHandlingTests() {
     expect(find.text('Dead Torrent - No Seeds'), findsOneWidget);
 
     await tester.tap(find.text('Dead Torrent - No Seeds'));
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
 
     expect(
       _anyTextFound(
@@ -78,8 +77,7 @@ void errorHandlingTests() {
     await search.enterQuery('timeout test');
 
     await tester.tap(find.text('timeout test - Track One'));
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
 
     expect(
       _anyTextFound(
@@ -118,8 +116,7 @@ void errorHandlingTests() {
     expect(find.text('Invalid Magnet Track'), findsOneWidget);
 
     await tester.tap(find.text('Invalid Magnet Track'));
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
 
     expect(
       _anyTextFound(

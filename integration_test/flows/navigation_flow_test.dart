@@ -65,15 +65,14 @@ void navigationFlowTests() {
     // First, trigger a search and tap a result to get a track playing.
     await tester.enterText(find.byType(TextField), 'test');
     await tester.testTextInput.receiveAction(TextInputAction.search);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
 
     // Tap the first result to start playback.
     final firstResult = find.text('test - Track One');
     if (firstResult.evaluate().isNotEmpty) {
       await tester.tap(firstResult);
       // Allow orchestrator and preparation to process.
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.pumpAndSettle();
+      await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
 
       // Now the mini player should show the track.
       // Tap the mini player area to open Now Playing.
@@ -98,17 +97,15 @@ void navigationFlowTests() {
     // Search and tap result.
     await tester.enterText(find.byType(TextField), 'test');
     await tester.testTextInput.receiveAction(TextInputAction.search);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
 
     final firstResult = find.text('test - Track One');
     if (firstResult.evaluate().isNotEmpty) {
       await tester.tap(firstResult);
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.pumpAndSettle();
+      await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
 
       final nav = NavigationRobot(tester);
       await nav.tapMiniPlayer();
-      await tester.pumpAndSettle();
 
       // Dismiss Now Playing.
       await nav.goBackFromNowPlaying();
@@ -128,13 +125,12 @@ void navigationFlowTests() {
     // Search and play a track.
     await tester.enterText(find.byType(TextField), 'test');
     await tester.testTextInput.receiveAction(TextInputAction.search);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
 
     final firstResult = find.text('test - Track One');
     if (firstResult.evaluate().isNotEmpty) {
       await tester.tap(firstResult);
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.pumpAndSettle();
+      await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
 
       final nav = NavigationRobot(tester);
 

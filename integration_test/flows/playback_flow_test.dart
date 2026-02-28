@@ -24,8 +24,7 @@ void playbackFlowTests() {
     await search.enterQuery('test');
     await search.tapResult('test - Track One');
     // Allow preparation to start.
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   testWidgets('Tap result starts download + shows loading state',
@@ -57,7 +56,7 @@ void playbackFlowTests() {
       isTrue,
     );
 
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   });
 
   testWidgets('Download progress visible in Now Playing', (tester) async {
@@ -72,7 +71,6 @@ void playbackFlowTests() {
     // Open Now Playing.
     final nav = NavigationRobot(tester);
     await nav.tapMiniPlayer();
-    await tester.pumpAndSettle();
 
     // Download progress (LinearProgressIndicator) should be visible.
     final player = PlayerRobot(tester);
@@ -113,18 +111,15 @@ void playbackFlowTests() {
     // Open Now Playing.
     final nav = NavigationRobot(tester);
     await nav.tapMiniPlayer();
-    await tester.pumpAndSettle();
 
     final player = PlayerRobot(tester);
     final dismiss = find.byTooltip('Dismiss');
     if (dismiss.evaluate().isNotEmpty) {
       // Toggle play/pause.
       await player.tapPlayPause();
-      await tester.pumpAndSettle();
 
       // Toggle back.
       await player.tapPlayPause();
-      await tester.pumpAndSettle();
     }
   });
 
@@ -139,7 +134,6 @@ void playbackFlowTests() {
 
     final nav = NavigationRobot(tester);
     await nav.tapMiniPlayer();
-    await tester.pumpAndSettle();
 
     final player = PlayerRobot(tester);
     final dismiss = find.byTooltip('Dismiss');
@@ -161,7 +155,6 @@ void playbackFlowTests() {
 
     final nav = NavigationRobot(tester);
     await nav.tapMiniPlayer();
-    await tester.pumpAndSettle();
 
     final dismiss = find.byTooltip('Dismiss');
     if (dismiss.evaluate().isNotEmpty) {
@@ -170,7 +163,7 @@ void playbackFlowTests() {
       expect(slider, findsOneWidget);
 
       // Pump some time to let position advance.
-      await tester.pump(const Duration(milliseconds: 500));
+      await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
       // Slider should still be present.
       expect(slider, findsOneWidget);
     }
@@ -187,7 +180,6 @@ void playbackFlowTests() {
 
     final nav = NavigationRobot(tester);
     await nav.tapMiniPlayer();
-    await tester.pumpAndSettle();
 
     final player = PlayerRobot(tester);
     final dismiss = find.byTooltip('Dismiss');
@@ -225,11 +217,9 @@ void playbackFlowTests() {
 
     // Tap play/pause on mini player.
     await nav.tapMiniPlayerPlayPause();
-    await tester.pumpAndSettle();
 
     // Tap again to toggle back.
     await nav.tapMiniPlayerPlayPause();
-    await tester.pumpAndSettle();
 
     // Track should still be visible.
     nav.expectMiniPlayerVisible('test - Track One');

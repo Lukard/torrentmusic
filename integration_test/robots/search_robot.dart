@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../test_helpers.dart';
+
 /// Page Object for search screen interactions.
 class SearchRobot {
   final WidgetTester tester;
@@ -18,7 +20,7 @@ class SearchRobot {
   Future<void> enterQuery(String query) async {
     await tester.enterText(_searchField, query);
     await tester.testTextInput.receiveAction(TextInputAction.search);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Clear the search field.
@@ -26,7 +28,7 @@ class SearchRobot {
     // First type something so clear button appears.
     if (_clearButton.evaluate().isNotEmpty) {
       await tester.tap(_clearButton);
-      await tester.pumpAndSettle();
+      await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
     }
   }
 
@@ -35,7 +37,7 @@ class SearchRobot {
     final finder = find.text(title);
     expect(finder, findsOneWidget, reason: 'Result "$title" should be visible');
     await tester.tap(finder);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Long-press a search result to add to queue.
@@ -43,14 +45,14 @@ class SearchRobot {
     final finder = find.text(title);
     expect(finder, findsOneWidget, reason: 'Result "$title" should be visible');
     await tester.longPress(finder);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Tap the retry button.
   Future<void> tapRetry() async {
     expect(_retryButton, findsOneWidget, reason: 'Retry button should exist');
     await tester.tap(_retryButton);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Verify search results are displayed.

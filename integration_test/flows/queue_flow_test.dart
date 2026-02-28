@@ -23,12 +23,10 @@ void queueFlowTests() {
     await search.enterQuery('queue test');
     // Tap first result to start playing.
     await search.tapResult('queue test - Track One');
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
 
     // Long-press second result to add to queue.
     await search.longPressResult('queue test - Track Two (FLAC)');
-    await tester.pumpAndSettle();
   }
 
   testWidgets('Tap second result adds to queue', (tester) async {
@@ -43,12 +41,10 @@ void queueFlowTests() {
 
     // Tap first to play.
     await search.tapResult('queue test - Track One');
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
 
     // Long-press second to add to queue.
     await search.longPressResult('queue test - Track Two (FLAC)');
-    await tester.pumpAndSettle();
 
     // Should see snackbar confirmation.
     expect(find.textContaining('Added'), findsOneWidget);
@@ -66,14 +62,12 @@ void queueFlowTests() {
     // Open Now Playing.
     final nav = NavigationRobot(tester);
     await nav.tapMiniPlayer();
-    await tester.pumpAndSettle();
 
     final player = PlayerRobot(tester);
     final dismiss = find.byTooltip('Dismiss');
     if (dismiss.evaluate().isNotEmpty) {
       // Tap next to skip.
       await player.tapNext();
-      await tester.pumpAndSettle();
 
       // The second track should now be shown.
       // Note: the mock may not fully load the second track since it needs
@@ -92,18 +86,15 @@ void queueFlowTests() {
 
     final nav = NavigationRobot(tester);
     await nav.tapMiniPlayer();
-    await tester.pumpAndSettle();
 
     final player = PlayerRobot(tester);
     final dismiss = find.byTooltip('Dismiss');
     if (dismiss.evaluate().isNotEmpty) {
       // Skip to next first.
       await player.tapNext();
-      await tester.pumpAndSettle();
 
       // Then go back.
       await player.tapPrevious();
-      await tester.pumpAndSettle();
     }
   });
 
@@ -118,7 +109,6 @@ void queueFlowTests() {
 
     final nav = NavigationRobot(tester);
     await nav.tapMiniPlayer();
-    await tester.pumpAndSettle();
 
     final player = PlayerRobot(tester);
     final dismiss = find.byTooltip('Dismiss');
@@ -145,7 +135,6 @@ void queueFlowTests() {
 
     final nav = NavigationRobot(tester);
     await nav.tapMiniPlayer();
-    await tester.pumpAndSettle();
 
     final player = PlayerRobot(tester);
     final dismiss = find.byTooltip('Dismiss');

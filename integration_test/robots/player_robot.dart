@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../test_helpers.dart';
+
 /// Page Object for Now Playing screen interactions.
 class PlayerRobot {
   final WidgetTester tester;
@@ -35,20 +37,20 @@ class PlayerRobot {
     final fab = find.byType(FloatingActionButton);
     if (fab.evaluate().isNotEmpty) {
       await tester.tap(fab);
-      await tester.pumpAndSettle();
+      await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
     }
   }
 
   /// Tap next track button.
   Future<void> tapNext() async {
     await tester.tap(_nextButton);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Tap previous track button.
   Future<void> tapPrevious() async {
     await tester.tap(_previousButton);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Toggle shuffle.
@@ -60,7 +62,7 @@ class PlayerRobot {
     } else {
       await tester.tap(on);
     }
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Cycle repeat mode.
@@ -75,7 +77,7 @@ class PlayerRobot {
     } else if (one.evaluate().isNotEmpty) {
       await tester.tap(one);
     }
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Verify the seek bar is present.
@@ -94,7 +96,7 @@ class PlayerRobot {
       rect.center.dy,
     );
     await tester.tapAt(target);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
     // Ignore the actual value; just verify the gesture was accepted.
     expect(sliderWidget, isNotNull);
   }
@@ -102,7 +104,7 @@ class PlayerRobot {
   /// Dismiss Now Playing screen.
   Future<void> dismiss() async {
     await tester.tap(_dismissButton);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Verify download progress indicator is visible.

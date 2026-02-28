@@ -74,7 +74,7 @@ void searchFlowTests() {
     search.expectLoading();
 
     // Wait for search to complete.
-    await tester.pumpAndSettle(const Duration(seconds: 3));
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 3));
     search.expectResultsVisible(['slow query - Track One']);
   });
 

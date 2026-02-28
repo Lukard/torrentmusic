@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../test_helpers.dart';
+
 /// Page Object for bottom navigation and mini player interactions.
 class NavigationRobot {
   final WidgetTester tester;
@@ -14,19 +16,19 @@ class NavigationRobot {
   /// Tap the Search tab.
   Future<void> tapSearchTab() async {
     await tester.tap(_searchTab);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Tap the Library tab.
   Future<void> tapLibraryTab() async {
     await tester.tap(_libraryTab);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Tap the Settings tab.
   Future<void> tapSettingsTab() async {
     await tester.tap(_settingsTab);
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Verify Search screen is displayed.
@@ -67,7 +69,7 @@ class NavigationRobot {
       final firstProgress = miniPlayerProgress.first;
       final rect = tester.getRect(firstProgress);
       await tester.tapAt(Offset(rect.center.dx, rect.bottom + 20));
-      await tester.pumpAndSettle();
+      await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
     }
   }
 
@@ -93,7 +95,7 @@ class NavigationRobot {
     } else if (play.evaluate().isNotEmpty) {
       await tester.tap(play.first);
     }
-    await tester.pumpAndSettle();
+    await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
   }
 
   /// Go back from Now Playing screen.
@@ -101,13 +103,13 @@ class NavigationRobot {
     final dismiss = find.byTooltip('Dismiss');
     if (dismiss.evaluate().isNotEmpty) {
       await tester.tap(dismiss);
-      await tester.pumpAndSettle();
+      await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
     } else {
       // Use system back.
       final navigator = find.byType(Navigator);
       if (navigator.evaluate().isNotEmpty) {
         await tester.pageBack();
-        await tester.pumpAndSettle();
+        await TestHelpers.pumpFor(tester, const Duration(seconds: 2));
       }
     }
   }
