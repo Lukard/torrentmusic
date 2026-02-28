@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'indexer_settings.dart';
 import 'search_result.dart';
 import 'search_service.dart';
 
-/// Provides the singleton [SearchService] instance.
+/// Provides a [SearchService] that respects current [IndexerSettings].
 final searchServiceProvider = Provider<SearchService>((ref) {
-  return TorrentSearchService();
+  final settings = ref.watch(indexerSettingsProvider);
+  return TorrentSearchService(settings: settings);
 });
 
 /// Fetches search results for a given query string.

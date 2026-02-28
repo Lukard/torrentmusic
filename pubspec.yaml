@@ -51,6 +51,7 @@ dependencies:
   path_provider: ^2.1.4
   http: ^1.2.2
   html: ^0.15.5
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:

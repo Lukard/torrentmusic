@@ -33,17 +33,27 @@ class PartialResult {
   final int sizeBytes;
 }
 
+/// Default 1337x mirror URLs, tried in order when the current one fails.
+const kLeetMirrors = [
+  'https://1337x.to',
+  'https://1337x.unblockit.day',
+  'https://www.1337xx.to',
+  'https://1337x.st',
+];
+
 /// Scrapes the 1337x public torrent indexer for music torrents.
 class LeetIndexer {
   /// Creates a [LeetIndexer].
   ///
-  /// An optional [client] and [baseUrl] can be injected for testing.
-  LeetIndexer({http.Client? client, String? baseUrl})
+  /// An optional [client] and [mirrors] list can be injected for testing.
+  /// If [mirrors] is provided, the indexer tries each mirror in order.
+  /// Falls back to [kLeetMirrors] if not specified.
+  LeetIndexer({http.Client? client, List<String>? mirrors, String? baseUrl})
       : _client = client ?? http.Client(),
-        _baseUrl = baseUrl ?? 'https://1337x.to';
+        _mirrors = mirrors ?? (baseUrl != null ? [baseUrl] : kLeetMirrors);
 
   final http.Client _client;
-  final String _baseUrl;
+  final List<String> _mirrors;
 
   /// Source name reported in [SearchResult.source].
   static const String sourceName = '1337x';
@@ -55,33 +65,44 @@ class LeetIndexer {
   static const _requestTimeout = Duration(seconds: 15);
 
   /// Search 1337x for music torrents matching [query].
+  ///
+  /// Tries each mirror in order until one succeeds. Returns empty list
+  /// if all mirrors fail.
   Future<List<SearchResult>> search(String query) async {
     final encoded = Uri.encodeComponent(query);
-    final url = '$_baseUrl/category-search/$encoded/Music/1/';
 
-    final http.Response response;
-    try {
-      response = await _client.get(Uri.parse(url)).timeout(_requestTimeout);
-    } on Exception {
-      return [];
+    for (final mirror in _mirrors) {
+      final url = '$mirror/category-search/$encoded/Music/1/';
+
+      final http.Response response;
+      try {
+        response = await _client.get(Uri.parse(url)).timeout(_requestTimeout);
+      } on Exception {
+        continue; // Try next mirror.
+      }
+
+      if (response.statusCode != 200) {
+        continue; // Try next mirror.
+      }
+
+      final partials =
+          parseSearchPage(response.body).take(_maxDetailFetches).toList();
+
+      final results = await Future.wait(
+        partials.map((p) => _resolvePartial(p, mirror)),
+      );
+
+      return results.whereType<SearchResult>().toList();
     }
 
-    if (response.statusCode != 200) {
-      return [];
-    }
-
-    final partials =
-        parseSearchPage(response.body).take(_maxDetailFetches).toList();
-
-    final results = await Future.wait(
-      partials.map(_resolvePartial),
-    );
-
-    return results.whereType<SearchResult>().toList();
+    return [];
   }
 
-  Future<SearchResult?> _resolvePartial(PartialResult partial) async {
-    final magnetUri = await _fetchMagnetLink(partial.detailPath);
+  Future<SearchResult?> _resolvePartial(
+    PartialResult partial,
+    String baseUrl,
+  ) async {
+    final magnetUri = await _fetchMagnetLink(partial.detailPath, baseUrl);
     if (magnetUri == null) return null;
 
     return SearchResult(
@@ -95,8 +116,8 @@ class LeetIndexer {
     );
   }
 
-  Future<String?> _fetchMagnetLink(String detailPath) async {
-    final url = '$_baseUrl$detailPath';
+  Future<String?> _fetchMagnetLink(String detailPath, String baseUrl) async {
+    final url = '$baseUrl$detailPath';
 
     final http.Response response;
     try {

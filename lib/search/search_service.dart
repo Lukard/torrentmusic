@@ -1,4 +1,6 @@
+import 'indexer_settings.dart';
 import 'leet_indexer.dart';
+import 'pirate_bay_indexer.dart';
 import 'search_result.dart';
 
 /// Interface for searching torrent indexers for music content.
@@ -9,21 +11,51 @@ abstract class SearchService {
   Future<List<SearchResult>> search(String query, {SearchType? type});
 }
 
-/// Concrete [SearchService] that aggregates results from torrent indexers
-/// and filters for audio content.
+/// Concrete [SearchService] that aggregates results from multiple torrent
+/// indexers, deduplicates them, and filters for audio content.
 class TorrentSearchService implements SearchService {
   /// Creates a [TorrentSearchService].
   ///
-  /// An optional [indexer] can be injected for testing.
-  TorrentSearchService({LeetIndexer? indexer})
-      : _indexer = indexer ?? LeetIndexer();
+  /// When [settings] is provided, enabled indexers are determined from it.
+  /// Optional [leetIndexer] and [pirateBayIndexer] can be injected for testing.
+  TorrentSearchService({
+    IndexerSettings? settings,
+    LeetIndexer? leetIndexer,
+    PirateBayIndexer? pirateBayIndexer,
+  })  : _settings = settings ?? const IndexerSettings(),
+        _leetIndexer = leetIndexer,
+        _pirateBayIndexer = pirateBayIndexer;
 
-  final LeetIndexer _indexer;
+  final IndexerSettings _settings;
+  final LeetIndexer? _leetIndexer;
+  final PirateBayIndexer? _pirateBayIndexer;
 
   @override
   Future<List<SearchResult>> search(String query, {SearchType? type}) async {
-    final results = await _indexer.search(query);
-    return results.where(isAudioContent).toList();
+    final futures = <Future<List<SearchResult>>>[];
+
+    if (_settings.leetEnabled) {
+      final indexer =
+          _leetIndexer ?? LeetIndexer(mirrors: _settings.leetMirrors);
+      futures.add(indexer.search(query));
+    }
+
+    if (_settings.pirateBayEnabled) {
+      final indexer = _pirateBayIndexer ?? PirateBayIndexer();
+      futures.add(indexer.search(query));
+    }
+
+    if (futures.isEmpty) return [];
+
+    final allResults = (await Future.wait(futures)).expand((r) => r).toList();
+
+    final filtered = allResults.where(isAudioContent).toList();
+    final deduped = _deduplicate(filtered);
+
+    // Sort by seeds descending.
+    deduped.sort((a, b) => b.seeds.compareTo(a.seeds));
+
+    return deduped;
   }
 
   /// Returns `true` when [result] looks like audio rather than video.
@@ -52,5 +84,25 @@ class TorrentSearchService implements SearchService {
       '.wmv',
     ];
     return !videoIndicators.any(lower.contains);
+  }
+
+  /// Deduplicates results by normalized title similarity.
+  ///
+  /// When two results have very similar titles, the one with more seeds wins.
+  static List<SearchResult> _deduplicate(List<SearchResult> results) {
+    final seen = <String, SearchResult>{};
+    for (final result in results) {
+      final key = _normalizeTitle(result.title);
+      final existing = seen[key];
+      if (existing == null || result.seeds > existing.seeds) {
+        seen[key] = result;
+      }
+    }
+    return seen.values.toList();
+  }
+
+  /// Normalizes a title for deduplication comparison.
+  static String _normalizeTitle(String title) {
+    return title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '').trim();
   }
 }

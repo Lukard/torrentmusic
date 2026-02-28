@@ -281,6 +281,81 @@ void main() {
       expect(results, isEmpty);
     });
   });
+
+  group('LeetIndexer mirror fallback', () {
+    test('falls back to second mirror when first fails', () async {
+      var requestCount = 0;
+      final client = MockClient((request) async {
+        requestCount++;
+        if (request.url.host == 'mirror1.example.com') {
+          return http.Response('Blocked', 403);
+        }
+        if (request.url.path.contains('category-search')) {
+          return http.Response(_searchPageHtml, 200);
+        }
+        if (request.url.path.contains('/torrent/')) {
+          return http.Response(_detailPageHtml, 200);
+        }
+        return http.Response('Not found', 404);
+      });
+
+      final indexer = LeetIndexer(
+        client: client,
+        mirrors: [
+          'https://mirror1.example.com',
+          'https://mirror2.example.com',
+        ],
+      );
+      final results = await indexer.search('pink floyd');
+
+      expect(results, hasLength(2));
+      // First request to mirror1 failed, then mirror2 succeeded.
+      expect(requestCount, greaterThan(1));
+    });
+
+    test('returns empty when all mirrors fail', () async {
+      final client = MockClient(
+        (_) async => http.Response('Blocked', 403),
+      );
+
+      final indexer = LeetIndexer(
+        client: client,
+        mirrors: [
+          'https://mirror1.example.com',
+          'https://mirror2.example.com',
+        ],
+      );
+      final results = await indexer.search('test');
+
+      expect(results, isEmpty);
+    });
+
+    test('falls back on network exception', () async {
+      var callCount = 0;
+      final client = MockClient((request) async {
+        callCount++;
+        if (callCount == 1) throw Exception('timeout');
+        if (request.url.path.contains('category-search')) {
+          return http.Response(_searchPageHtml, 200);
+        }
+        if (request.url.path.contains('/torrent/')) {
+          return http.Response(_detailPageHtml, 200);
+        }
+        return http.Response('Not found', 404);
+      });
+
+      final indexer = LeetIndexer(
+        client: client,
+        mirrors: [
+          'https://mirror1.example.com',
+          'https://mirror2.example.com',
+        ],
+      );
+      final results = await indexer.search('test');
+
+      expect(results, hasLength(2));
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------
