@@ -21,11 +21,11 @@ jobs:
           flutter-version: '3.22.3'
           channel: 'stable'
 
-      - name: Fix Android SDK
+      - name: Fix Android SDK 35
         run: |
-          # android-35 is corrupted on ubuntu-latest runners
-          rm -rf $ANDROID_HOME/platforms/android-35
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" 2>/dev/null || true
+          # Reinstall android-35 platform (corrupted on runners)
+          sudo rm -rf $ANDROID_HOME/platforms/android-35
+          yes | sudo $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" 2>/dev/null || true
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
 
       - run: flutter pub get
