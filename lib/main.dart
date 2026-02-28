@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'ui/screens/home_shell.dart';
+import 'ui/theme/app_theme.dart';
+
 void main() {
   runApp(const ProviderScope(child: TorrentMusicApp()));
 }
@@ -12,13 +15,9 @@ class TorrentMusicApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TorrentMusic',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const Scaffold(
-        body: Center(child: Text('TorrentMusic')),
-      ),
+      debugShowCheckedModeBanner: false,
+      theme: buildDarkTheme(),
+      home: const HomeShell(),
     );
   }
 }
