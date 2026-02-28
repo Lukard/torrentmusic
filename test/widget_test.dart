@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:torrentmusic/main.dart';
 
 void main() {
@@ -8,7 +8,9 @@ void main() {
     await tester.pumpWidget(
       const ProviderScope(child: TorrentMusicApp()),
     );
-    // Just verify it builds without throwing
+    // Just verify it builds without throwing.
     expect(find.byType(MaterialApp), findsOneWidget);
+    // Search screen should be the default tab.
+    expect(find.text('Search'), findsWidgets);
   });
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/core_providers.dart';
+import '../../core/torrent_engine.dart';
 import '../../player/player_provider.dart';
 import '../theme/app_colors.dart';
 
@@ -16,10 +18,20 @@ class MiniPlayer extends ConsumerWidget {
     final track = player.currentTrack;
     if (track == null) return const SizedBox.shrink();
 
-    final progress = (player.duration.inMilliseconds > 0
+    final torrentStatusAsync = ref.watch(torrentStatusStreamProvider);
+
+    final playbackProgress = (player.duration.inMilliseconds > 0
             ? player.position.inMilliseconds / player.duration.inMilliseconds
             : 0.0)
         .clamp(0.0, 1.0);
+
+    // Determine if we're still downloading.
+    final isDownloading = torrentStatusAsync.whenOrNull(
+          data: (status) =>
+              status.state == TorrentState.downloading ||
+              status.state == TorrentState.metadata,
+        ) ??
+        false;
 
     return GestureDetector(
       onTap: onTap,
@@ -31,9 +43,9 @@ class MiniPlayer extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Progress indicator
+            // Progress indicator — playback position
             LinearProgressIndicator(
-              value: progress,
+              value: playbackProgress,
               minHeight: 2,
               backgroundColor: AppColors.surfaceVariant,
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
@@ -72,14 +84,33 @@ class MiniPlayer extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          track.artist,
-                          style: const TextStyle(
-                            color: AppColors.onSurface,
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          children: [
+                            if (isDownloading) ...[
+                              const SizedBox(
+                                width: 10,
+                                height: 10,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.accentLight,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            Expanded(
+                              child: Text(
+                                track.artist,
+                                style: const TextStyle(
+                                  color: AppColors.onSurface,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
