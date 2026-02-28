@@ -21,6 +21,12 @@ jobs:
           flutter-version: '3.22.3'
           channel: 'stable'
 
+      - name: Fix Android SDK platform
+        run: |
+          # Remove corrupted android-35 and reinstall
+          rm -rf $ANDROID_HOME/platforms/android-35
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
       - name: Accept Android licenses
         run: yes | flutter doctor --android-licenses 2>/dev/null || true
 
