@@ -42,6 +42,7 @@ dependencies:
 
   # Audio
   just_audio: ^0.9.40
+  audio_service: ^0.18.15
 
   # Riverpod annotations (used in source, not just build)
   riverpod_annotation: ^2.3.5
