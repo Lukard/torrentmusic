@@ -7,7 +7,7 @@ import 'leet_indexer.dart';
 class IndexerSettings {
   const IndexerSettings({
     this.leetEnabled = true,
-    this.pirateBayEnabled = false,
+    this.pirateBayEnabled = true,
     this.leetMirrors = kLeetMirrors,
   });
 

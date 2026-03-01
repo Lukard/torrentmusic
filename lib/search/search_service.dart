@@ -37,17 +37,32 @@ class TorrentSearchService implements SearchService {
     if (_settings.leetEnabled) {
       final indexer =
           _leetIndexer ?? LeetIndexer(mirrors: _settings.leetMirrors);
-      futures.add(indexer.search(query));
+      futures.add(_safeSearch(indexer.search(query), LeetIndexer.sourceName));
     }
 
     if (_settings.pirateBayEnabled) {
       final indexer = _pirateBayIndexer ?? PirateBayIndexer();
-      futures.add(indexer.search(query));
+      futures.add(
+        _safeSearch(indexer.search(query), PirateBayIndexer.sourceName),
+      );
     }
 
-    if (futures.isEmpty) return [];
+    if (futures.isEmpty) {
+      throw StateError(
+        'No indexers enabled. Enable at least one in Settings.',
+      );
+    }
 
-    final allResults = (await Future.wait(futures)).expand((r) => r).toList();
+    final results = await Future.wait(futures);
+    final allResults = results.expand((r) => r).toList();
+
+    // If every indexer returned empty, check if it's because they all failed.
+    if (allResults.isEmpty && _indexerErrors.isNotEmpty) {
+      final sources = _indexerErrors.join(', ');
+      _indexerErrors.clear();
+      throw StateError('Search failed — all indexers errored ($sources).');
+    }
+    _indexerErrors.clear();
 
     final filtered = allResults.where(isAudioContent).toList();
     final deduped = _deduplicate(filtered);
@@ -56,6 +71,21 @@ class TorrentSearchService implements SearchService {
     deduped.sort((a, b) => b.seeds.compareTo(a.seeds));
 
     return deduped;
+  }
+
+  final List<String> _indexerErrors = [];
+
+  /// Wraps an indexer search so a single failure doesn't kill all results.
+  Future<List<SearchResult>> _safeSearch(
+    Future<List<SearchResult>> search,
+    String sourceName,
+  ) async {
+    try {
+      return await search;
+    } catch (e) {
+      _indexerErrors.add(sourceName);
+      return [];
+    }
   }
 
   /// Returns `true` when [result] looks like audio rather than video.
