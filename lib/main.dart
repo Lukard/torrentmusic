@@ -16,14 +16,19 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final playerService = AudioPlayerService();
 
-  await AudioService.init(
-    builder: () => TorrentMusicAudioHandler(playerService),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.torrentmusic.player.channel',
-      androidNotificationChannelName: 'TorrentMusic',
-      androidNotificationOngoing: true,
-    ),
-  );
+  // Audio service init is best-effort — app works without it
+  try {
+    await AudioService.init(
+      builder: () => TorrentMusicAudioHandler(playerService),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.torrentmusic.player.channel',
+        androidNotificationChannelName: 'TorrentMusic',
+        androidNotificationOngoing: true,
+      ),
+    );
+  } catch (e) {
+    debugPrint('AudioService.init failed (non-fatal): $e');
+  }
 
   runApp(
     ProviderScope(
