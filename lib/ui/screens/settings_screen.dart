@@ -41,6 +41,60 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const Divider(color: AppColors.divider, height: 32),
                 _section(context, 'Indexers'),
+                _indexerSubsection(context, 'API-based'),
+                SwitchListTile(
+                  secondary: const Icon(
+                    Icons.sailing_rounded,
+                    color: AppColors.onSurface,
+                  ),
+                  title: const Text('The Pirate Bay'),
+                  subtitle: const Text(
+                    'apibay.org',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  value: settings.pirateBayEnabled,
+                  onChanged: (v) => notifier.setPirateBayEnabled(v),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(
+                    Icons.swap_vert_rounded,
+                    color: AppColors.onSurface,
+                  ),
+                  title: const Text('Solidtorrents'),
+                  subtitle: const Text(
+                    'solidtorrents.to',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  value: settings.solidtorrentsEnabled,
+                  onChanged: (v) => notifier.setSolidtorrentsEnabled(v),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(
+                    Icons.manage_search_rounded,
+                    color: AppColors.onSurface,
+                  ),
+                  title: const Text('Bitsearch'),
+                  subtitle: const Text(
+                    'bitsearch.to',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  value: settings.bitsearchEnabled,
+                  onChanged: (v) => notifier.setBitsearchEnabled(v),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(
+                    Icons.hub_rounded,
+                    color: AppColors.onSurface,
+                  ),
+                  title: const Text('BTDig'),
+                  subtitle: const Text(
+                    'btdig.com',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  value: settings.btdigEnabled,
+                  onChanged: (v) => notifier.setBtdigEnabled(v),
+                ),
+                _indexerSubsection(context, 'Scraping'),
                 SwitchListTile(
                   secondary: const Icon(
                     Icons.search_rounded,
@@ -64,16 +118,42 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 SwitchListTile(
                   secondary: const Icon(
-                    Icons.sailing_rounded,
+                    Icons.animation_rounded,
                     color: AppColors.onSurface,
                   ),
-                  title: const Text('The Pirate Bay'),
+                  title: const Text('Nyaa'),
                   subtitle: const Text(
-                    'apibay.org',
+                    'nyaa.si',
                     style: TextStyle(fontSize: 12),
                   ),
-                  value: settings.pirateBayEnabled,
-                  onChanged: (v) => notifier.setPirateBayEnabled(v),
+                  value: settings.nyaaEnabled,
+                  onChanged: (v) => notifier.setNyaaEnabled(v),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(
+                    Icons.public_rounded,
+                    color: AppColors.onSurface,
+                  ),
+                  title: const Text('TorrentGalaxy'),
+                  subtitle: const Text(
+                    'torrentgalaxy.to',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  value: settings.torrentGalaxyEnabled,
+                  onChanged: (v) => notifier.setTorrentGalaxyEnabled(v),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(
+                    Icons.grass_rounded,
+                    color: AppColors.onSurface,
+                  ),
+                  title: const Text('LimeTorrents'),
+                  subtitle: const Text(
+                    'limetorrents.lol',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  value: settings.limeTorrentsEnabled,
+                  onChanged: (v) => notifier.setLimeTorrentsEnabled(v),
                 ),
                 const Divider(color: AppColors.divider, height: 32),
                 _section(context, 'Appearance'),
@@ -106,6 +186,21 @@ class SettingsScreen extends ConsumerWidget {
           color: AppColors.accent,
           fontWeight: FontWeight.w600,
           fontSize: 13,
+        ),
+      ),
+    );
+  }
+
+  Widget _indexerSubsection(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 2),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: AppColors.onSurface.withOpacity(0.5),
+          fontWeight: FontWeight.w500,
+          fontSize: 11,
+          letterSpacing: 0.8,
         ),
       ),
     );

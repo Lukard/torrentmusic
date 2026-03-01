@@ -1,7 +1,13 @@
+import 'bitsearch_indexer.dart';
+import 'btdig_indexer.dart';
 import 'indexer_settings.dart';
 import 'leet_indexer.dart';
+import 'limetorrents_indexer.dart';
+import 'nyaa_indexer.dart';
 import 'pirate_bay_indexer.dart';
 import 'search_result.dart';
+import 'solidtorrents_indexer.dart';
+import 'torrent_galaxy_indexer.dart';
 
 /// Interface for searching torrent indexers for music content.
 abstract class SearchService {
@@ -17,18 +23,39 @@ class TorrentSearchService implements SearchService {
   /// Creates a [TorrentSearchService].
   ///
   /// When [settings] is provided, enabled indexers are determined from it.
-  /// Optional [leetIndexer] and [pirateBayIndexer] can be injected for testing.
+  /// Optional indexer instances can be injected for testing.
   TorrentSearchService({
     IndexerSettings? settings,
     LeetIndexer? leetIndexer,
     PirateBayIndexer? pirateBayIndexer,
+    SolidtorrentsIndexer? solidtorrentsIndexer,
+    BitsearchIndexer? bitsearchIndexer,
+    BtdigIndexer? btdigIndexer,
+    NyaaIndexer? nyaaIndexer,
+    TorrentGalaxyIndexer? torrentGalaxyIndexer,
+    LimeTorrentsIndexer? limeTorrentsIndexer,
   })  : _settings = settings ?? const IndexerSettings(),
         _leetIndexer = leetIndexer,
-        _pirateBayIndexer = pirateBayIndexer;
+        _pirateBayIndexer = pirateBayIndexer,
+        _solidtorrentsIndexer = solidtorrentsIndexer,
+        _bitsearchIndexer = bitsearchIndexer,
+        _btdigIndexer = btdigIndexer,
+        _nyaaIndexer = nyaaIndexer,
+        _torrentGalaxyIndexer = torrentGalaxyIndexer,
+        _limeTorrentsIndexer = limeTorrentsIndexer;
 
   final IndexerSettings _settings;
   final LeetIndexer? _leetIndexer;
   final PirateBayIndexer? _pirateBayIndexer;
+  final SolidtorrentsIndexer? _solidtorrentsIndexer;
+  final BitsearchIndexer? _bitsearchIndexer;
+  final BtdigIndexer? _btdigIndexer;
+  final NyaaIndexer? _nyaaIndexer;
+  final TorrentGalaxyIndexer? _torrentGalaxyIndexer;
+  final LimeTorrentsIndexer? _limeTorrentsIndexer;
+
+  /// Per-indexer search timeout.
+  static const _indexerTimeout = Duration(seconds: 15);
 
   @override
   Future<List<SearchResult>> search(String query, {SearchType? type}) async {
@@ -44,6 +71,47 @@ class TorrentSearchService implements SearchService {
       final indexer = _pirateBayIndexer ?? PirateBayIndexer();
       futures.add(
         _safeSearch(indexer.search(query), PirateBayIndexer.sourceName),
+      );
+    }
+
+    if (_settings.solidtorrentsEnabled) {
+      final indexer = _solidtorrentsIndexer ?? SolidtorrentsIndexer();
+      futures.add(
+        _safeSearch(
+          indexer.search(query),
+          SolidtorrentsIndexer.sourceName,
+        ),
+      );
+    }
+
+    if (_settings.bitsearchEnabled) {
+      final indexer = _bitsearchIndexer ?? BitsearchIndexer();
+      futures.add(
+        _safeSearch(indexer.search(query), BitsearchIndexer.sourceName),
+      );
+    }
+
+    if (_settings.btdigEnabled) {
+      final indexer = _btdigIndexer ?? BtdigIndexer();
+      futures.add(_safeSearch(indexer.search(query), BtdigIndexer.sourceName));
+    }
+
+    if (_settings.nyaaEnabled) {
+      final indexer = _nyaaIndexer ?? NyaaIndexer();
+      futures.add(_safeSearch(indexer.search(query), NyaaIndexer.sourceName));
+    }
+
+    if (_settings.torrentGalaxyEnabled) {
+      final indexer = _torrentGalaxyIndexer ?? TorrentGalaxyIndexer();
+      futures.add(
+        _safeSearch(indexer.search(query), TorrentGalaxyIndexer.sourceName),
+      );
+    }
+
+    if (_settings.limeTorrentsEnabled) {
+      final indexer = _limeTorrentsIndexer ?? LimeTorrentsIndexer();
+      futures.add(
+        _safeSearch(indexer.search(query), LimeTorrentsIndexer.sourceName),
       );
     }
 
@@ -75,13 +143,14 @@ class TorrentSearchService implements SearchService {
 
   final List<String> _indexerErrors = [];
 
-  /// Wraps an indexer search so a single failure doesn't kill all results.
+  /// Wraps an indexer search so a single failure or timeout doesn't kill
+  /// all results. Each indexer is bounded to [_indexerTimeout].
   Future<List<SearchResult>> _safeSearch(
     Future<List<SearchResult>> search,
     String sourceName,
   ) async {
     try {
-      return await search;
+      return await search.timeout(_indexerTimeout);
     } catch (e) {
       _indexerErrors.add(sourceName);
       return [];
@@ -116,19 +185,40 @@ class TorrentSearchService implements SearchService {
     return !videoIndicators.any(lower.contains);
   }
 
-  /// Deduplicates results by normalized title similarity.
+  /// Deduplicates results, preferring the entry with more seeds.
   ///
-  /// When two results have very similar titles, the one with more seeds wins.
+  /// Primary key: info_hash extracted from the magnet URI (when present).
+  /// Fallback key: normalized title similarity.
   static List<SearchResult> _deduplicate(List<SearchResult> results) {
     final seen = <String, SearchResult>{};
     for (final result in results) {
-      final key = _normalizeTitle(result.title);
+      final key = _deduplicationKey(result);
       final existing = seen[key];
       if (existing == null || result.seeds > existing.seeds) {
         seen[key] = result;
       }
     }
     return seen.values.toList();
+  }
+
+  /// Returns the deduplication key for [result].
+  ///
+  /// Uses the lowercase info_hash from the magnet URI when available so that
+  /// the same torrent reported by multiple indexers is correctly collapsed.
+  /// Falls back to a normalized title key for indexers that don't embed a hash.
+  static String _deduplicationKey(SearchResult result) {
+    final hash = _extractInfoHash(result.magnetUri);
+    if (hash != null) return 'hash:$hash';
+    return 'title:${_normalizeTitle(result.title)}';
+  }
+
+  /// Extracts the lowercase info_hash from a magnet URI, or `null` if absent.
+  static String? _extractInfoHash(String magnetUri) {
+    final match = RegExp(
+      r'btih:([a-fA-F0-9]{40})',
+      caseSensitive: false,
+    ).firstMatch(magnetUri);
+    return match?.group(1)?.toLowerCase();
   }
 
   /// Normalizes a title for deduplication comparison.
