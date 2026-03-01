@@ -62,6 +62,7 @@ class AudioPlayerService {
   List<int> _shuffleOrder = [];
 
   final _queueController = StreamController<QueueState>.broadcast();
+  final _errorController = StreamController<String>.broadcast();
   StreamSubscription<ProcessingState>? _processingStateSub;
 
   /// Create a new [AudioPlayerService].
@@ -91,6 +92,9 @@ class AudioPlayerService {
 
   /// Stream of queue state changes.
   Stream<QueueState> get queueStream => _queueController.stream;
+
+  /// Stream of playback errors (file not found, decode failures, etc.).
+  Stream<String> get errorStream => _errorController.stream;
 
   /// Current queue state snapshot.
   QueueState get queueState => QueueState(
@@ -122,8 +126,13 @@ class AudioPlayerService {
     if (path == null) {
       throw ArgumentError('No file path available for track: ${track.title}');
     }
-    await _player.setFilePath(path);
-    await _player.play();
+    try {
+      await _player.setFilePath(path);
+      await _player.play();
+    } catch (e) {
+      _errorController.add('Failed to play "${track.title}": $e');
+      rethrow;
+    }
   }
 
   /// Pause playback.
@@ -289,9 +298,16 @@ class AudioPlayerService {
   Future<void> playCurrentTrack() async {
     if (_currentIndex < 0 || _currentIndex >= _queue.length) return;
     final track = _queue[_currentIndex];
-    if (track.filePath == null) return;
-    await _player.setFilePath(track.filePath!);
-    await _player.play();
+    if (track.filePath == null) {
+      _errorController.add('No file path for "${track.title}"');
+      return;
+    }
+    try {
+      await _player.setFilePath(track.filePath!);
+      await _player.play();
+    } catch (e) {
+      _errorController.add('Failed to play "${track.title}": $e');
+    }
   }
 
   void _listenForTrackCompletion() {
@@ -303,12 +319,16 @@ class AudioPlayerService {
   }
 
   Future<void> _onTrackCompleted() async {
-    if (_repeatMode == RepeatMode.one) {
-      await seek(Duration.zero);
-      await _player.play();
-      return;
+    try {
+      if (_repeatMode == RepeatMode.one) {
+        await seek(Duration.zero);
+        await _player.play();
+        return;
+      }
+      await skipToNext();
+    } catch (e) {
+      _errorController.add('Auto-advance failed: $e');
     }
-    await skipToNext();
   }
 
   int? _nextIndex() {
@@ -361,6 +381,7 @@ class AudioPlayerService {
   Future<void> dispose() async {
     await _processingStateSub?.cancel();
     await _queueController.close();
+    await _errorController.close();
     await _player.dispose();
   }
 }
