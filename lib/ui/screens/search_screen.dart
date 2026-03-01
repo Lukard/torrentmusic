@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,6 +25,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _controller = TextEditingController();
+  StreamSubscription<PlaybackPreparation>? _preparationSub;
 
   @override
   void initState() {
@@ -30,7 +33,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     // Listen for preparation state changes from the orchestrator.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final orchestrator = ref.read(playbackOrchestratorProvider);
-      orchestrator.preparationStream.listen((prep) {
+      _preparationSub = orchestrator.preparationStream.listen((prep) {
         if (mounted) {
           ref.read(_preparationStateProvider.notifier).state = prep;
           // Clear the preparation state after a short delay on terminal states.
@@ -49,6 +52,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   void dispose() {
+    _preparationSub?.cancel();
     _controller.dispose();
     super.dispose();
   }

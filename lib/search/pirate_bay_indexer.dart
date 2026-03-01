@@ -57,22 +57,31 @@ class PirateBayIndexer {
   ///
   /// Public so unit tests can exercise it directly.
   static List<SearchResult> parseResponse(String body) {
-    final List<dynamic> items;
+    final dynamic decoded;
     try {
-      items = jsonDecode(body) as List<dynamic>;
+      decoded = jsonDecode(body);
     } on FormatException {
       return [];
     }
 
+    if (decoded is! List<dynamic>) return [];
+
     final results = <SearchResult>[];
-    for (final item in items) {
+    for (final item in decoded) {
       if (item is! Map<String, dynamic>) continue;
 
       final name = item['name'] as String? ?? '';
       final infoHash = item['info_hash'] as String? ?? '';
+      final id = item['id']?.toString() ?? '';
 
-      // apibay returns a single entry with id "0" when there are no results.
-      if (infoHash.isEmpty || infoHash == '0' || name.isEmpty) continue;
+      // apibay returns a single entry with id "0" and an all-zeros info_hash
+      // when there are no results.
+      if (id == '0' ||
+          infoHash.isEmpty ||
+          RegExp(r'^0+$').hasMatch(infoHash) ||
+          name.isEmpty) {
+        continue;
+      }
 
       final seeds = _parseInt(item['seeders']);
       final leeches = _parseInt(item['leechers']);
