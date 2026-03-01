@@ -60,6 +60,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void _submitSearch() {
     final query = _controller.text.trim();
     if (query.isNotEmpty) {
+      FocusScope.of(context).unfocus();
       ref.read(_searchQueryProvider.notifier).state = query;
     }
   }
