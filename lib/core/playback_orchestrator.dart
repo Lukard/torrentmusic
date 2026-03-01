@@ -145,11 +145,26 @@ class PlaybackOrchestrator {
       await playerService.playTrack(trackWithPath, filePath: filePath);
 
       emitPreparation(trackWithPath, PlaybackPreparationState.playing);
+    } on TorrentEngineException catch (e) {
+      emitPreparation(
+        track,
+        PlaybackPreparationState.error,
+        errorMessage: e.message,
+      );
+      rethrow;
+    } on TimeoutException {
+      emitPreparation(
+        track,
+        PlaybackPreparationState.error,
+        errorMessage: 'Timed out waiting for torrent data. '
+            'No peers may be available — try a result with more seeds.',
+      );
+      rethrow;
     } catch (e) {
       emitPreparation(
         track,
         PlaybackPreparationState.error,
-        errorMessage: e.toString(),
+        errorMessage: 'Failed to play track: $e',
       );
       rethrow;
     }
@@ -185,11 +200,24 @@ class PlaybackOrchestrator {
         await waitForBuffer(infoHash, fileIndex);
         await playerService.play(trackWithPath, filePath: filePath);
       }
+    } on TorrentEngineException catch (e) {
+      emitPreparation(
+        track,
+        PlaybackPreparationState.error,
+        errorMessage: e.message,
+      );
+    } on TimeoutException {
+      emitPreparation(
+        track,
+        PlaybackPreparationState.error,
+        errorMessage: 'Timed out waiting for torrent data. '
+            'No peers may be available — try a result with more seeds.',
+      );
     } catch (e) {
       emitPreparation(
         track,
         PlaybackPreparationState.error,
-        errorMessage: e.toString(),
+        errorMessage: 'Failed to queue track: $e',
       );
     }
   }

@@ -1,5 +1,19 @@
 import 'dart:async';
 
+/// Exception thrown when the torrent engine encounters a fatal error.
+///
+/// Carries a human-readable [message] suitable for display in the UI and an
+/// optional [cause] for programmatic inspection.
+class TorrentEngineException implements Exception {
+  final String message;
+  final Object? cause;
+
+  const TorrentEngineException(this.message, {this.cause});
+
+  @override
+  String toString() => 'TorrentEngineException: $message';
+}
+
 /// State of a torrent download.
 enum TorrentState {
   /// Resolving metadata from magnet link.

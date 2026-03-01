@@ -45,19 +45,30 @@ class Aria2Engine implements TorrentEngine {
         cachePath ?? '${Directory.systemTemp.path}/torrentmusic_downloads';
     await Directory(_downloadDir).create(recursive: true);
 
-    _process = await Process.start('aria2c', [
-      '--enable-rpc',
-      '--rpc-listen-port=$rpcPort',
-      '--dir=$_downloadDir',
-      '--seed-time=0',
-      '--bt-save-metadata=true',
-      '--enable-dht=true',
-      '--enable-peer-exchange=true',
-      '--bt-enable-lpd=true',
-      '--follow-torrent=mem',
-      if (maxConnections != null) '--max-connection-per-server=$maxConnections',
-      '--quiet=true',
-    ]);
+    try {
+      _process = await Process.start('aria2c', [
+        '--enable-rpc',
+        '--rpc-listen-port=$rpcPort',
+        '--dir=$_downloadDir',
+        '--seed-time=0',
+        '--bt-save-metadata=true',
+        '--enable-dht=true',
+        '--enable-peer-exchange=true',
+        '--bt-enable-lpd=true',
+        '--follow-torrent=mem',
+        if (maxConnections != null)
+          '--max-connection-per-server=$maxConnections',
+        '--quiet=true',
+      ]);
+    } on ProcessException catch (e) {
+      throw TorrentEngineException(
+        'aria2c is not installed or not found in PATH. '
+        'Install it with: brew install aria2 (macOS), '
+        'apt install aria2 (Linux), or download from https://aria2.github.io/ '
+        '(Windows). On mobile platforms, use DartTorrentEngine instead.',
+        cause: e,
+      );
+    }
 
     // Drain process output to prevent backpressure.
     unawaited(_process!.stdout.drain<void>());
@@ -75,7 +86,12 @@ class Aria2Engine implements TorrentEngine {
       }
     }
     if (!ready) {
-      throw StateError('aria2c RPC did not become available');
+      _process?.kill();
+      _process = null;
+      throw TorrentEngineException(
+        'aria2c started but its RPC interface did not become available. '
+        'Check that port $rpcPort is not already in use.',
+      );
     }
 
     // Poll for status updates every second.
