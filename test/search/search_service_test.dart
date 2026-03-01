@@ -68,7 +68,7 @@ void main() {
       expect(results.every((r) => r.source == '1337x'), isTrue);
     });
 
-    test('returns empty list when no indexers enabled', () async {
+    test('throws when no indexers enabled', () async {
       final service = TorrentSearchService(
         settings: const IndexerSettings(
           leetEnabled: false,
@@ -76,10 +76,11 @@ void main() {
         ),
       );
 
-      final results = await service.search('test');
-      expect(results, isEmpty);
+      expect(
+        () => service.search('test'),
+        throwsStateError,
+      );
     });
-
     test('deduplicates results with similar titles', () async {
       final pbClient = MockClient((request) async {
         // Return two results with nearly identical titles.

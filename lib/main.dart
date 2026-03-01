@@ -3,20 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-<<<<<<< HEAD
 import 'player/audio_handler.dart';
 import 'player/audio_player_service.dart';
 import 'player/player_provider.dart';
-=======
 import 'search/indexer_settings.dart';
->>>>>>> origin/analysis/ui
 import 'ui/screens/home_shell.dart';
 import 'ui/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-<<<<<<< HEAD
+  final prefs = await SharedPreferences.getInstance();
   final playerService = AudioPlayerService();
 
   await AudioService.init(
@@ -27,18 +24,12 @@ Future<void> main() async {
       androidNotificationOngoing: true,
     ),
   );
-=======
-  final prefs = await SharedPreferences.getInstance();
->>>>>>> origin/analysis/ui
 
   runApp(
     ProviderScope(
       overrides: [
-<<<<<<< HEAD
         audioPlayerServiceProvider.overrideWithValue(playerService),
-=======
         sharedPreferencesProvider.overrideWithValue(prefs),
->>>>>>> origin/analysis/ui
       ],
       child: const TorrentMusicApp(),
     ),
