@@ -47,6 +47,12 @@ dependencies:
   # Riverpod annotations (used in source, not just build)
   riverpod_annotation: ^2.3.5
 
+  # Torrent engine (pure Dart — works on Android/iOS/desktop)
+  dtorrent_task_v2: ^0.4.1
+  dtorrent_parser: ^1.0.9
+  b_encode_decode: ^1.0.5
+  events_emitter2: ^1.0.4
+
   # Utilities
   path_provider: ^2.1.4
   http: ^1.2.2
@@ -67,6 +73,13 @@ dev_dependencies:
 
   # Drift code generation
   drift_dev: ^2.19.1
+
+# Override collection version pinned by integration_test SDK package.
+# collection 1.19.x is backward-compatible with 1.18.0; this override is
+# needed until Flutter SDK ships collection >=1.19.0 (expected in next stable).
+dependency_overrides:
+  collection: ^1.19.0
+  path: ^1.9.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
