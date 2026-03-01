@@ -195,18 +195,39 @@ class PlaybackOrchestrator {
   }
 
   /// Convert a [SearchResult] into a [Track].
+  ///
+  /// Attempts to parse "Artist - Title" from [SearchResult.title].
+  /// Falls back to "Unknown Artist" if no separator is found.
   @visibleForTesting
   Track searchResultToTrack(SearchResult result) {
+    final parts = _parseArtistTitle(result.title);
     return Track(
       id: result.magnetUri.hashCode.toRadixString(16),
-      title: result.title,
-      artist: result.source,
+      title: parts.$2,
+      artist: parts.$1,
       album: result.category ?? 'Unknown',
       duration: Duration.zero,
       seeds: result.seeds,
       size: formatBytes(result.sizeBytes),
       magnetUri: result.magnetUri,
     );
+  }
+
+  /// Try to split "Artist - Title" from a torrent name.
+  /// Returns (artist, title). Falls back to ("Unknown Artist", original).
+  static (String, String) _parseArtistTitle(String raw) {
+    // Common separators in torrent names: " - ", " – ", " — "
+    for (final sep in [' - ', ' – ', ' — ']) {
+      final idx = raw.indexOf(sep);
+      if (idx > 0) {
+        final artist = raw.substring(0, idx).trim();
+        final title = raw.substring(idx + sep.length).trim();
+        if (artist.isNotEmpty && title.isNotEmpty) {
+          return (artist, title);
+        }
+      }
+    }
+    return ('Unknown Artist', raw);
   }
 
   /// Pick the best audio file from a torrent's file list.

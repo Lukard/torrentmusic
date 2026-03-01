@@ -332,7 +332,9 @@ void main() {
 
       expect(preparations, isNotEmpty);
       final track = preparations.first.track;
-      expect(track.title, 'Test Song - Artist');
+      // "Test Song - Artist" is parsed into artist="Test Song", title="Artist"
+      expect(track.title, 'Artist');
+      expect(track.artist, 'Test Song');
       expect(track.seeds, 50);
     });
 

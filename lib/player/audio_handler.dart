@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:just_audio/just_audio.dart';
 
 import 'audio_player_service.dart';
 import 'track.dart';
@@ -17,6 +18,17 @@ MediaItem _trackToMediaItem(Track track) {
   );
 }
 
+/// Maps just_audio [ProcessingState] to audio_service [AudioProcessingState].
+AudioProcessingState _mapProcessingState(ProcessingState state) {
+  return switch (state) {
+    ProcessingState.idle => AudioProcessingState.idle,
+    ProcessingState.loading => AudioProcessingState.loading,
+    ProcessingState.buffering => AudioProcessingState.buffering,
+    ProcessingState.ready => AudioProcessingState.ready,
+    ProcessingState.completed => AudioProcessingState.completed,
+  };
+}
+
 /// System media controls handler for notification and lock screen integration.
 ///
 /// Bridges [AudioPlayerService] to [audio_service] so the OS can display
@@ -25,6 +37,10 @@ class TorrentMusicAudioHandler extends BaseAudioHandler
     with SeekHandler, QueueHandler {
   final AudioPlayerService _service;
   final List<StreamSubscription<dynamic>> _subs = [];
+
+  /// Tracks the current processing state from just_audio so that
+  /// [_updatePlaybackState] emits the correct value.
+  AudioProcessingState _currentProcessingState = AudioProcessingState.idle;
 
   TorrentMusicAudioHandler(this._service) {
     // Forward position updates.
@@ -35,6 +51,14 @@ class TorrentMusicAudioHandler extends BaseAudioHandler
             updatePosition: pos,
           ),
         );
+      }),
+    );
+
+    // Forward processing state from just_audio.
+    _subs.add(
+      _service.processingStateStream.listen((ps) {
+        _currentProcessingState = _mapProcessingState(ps);
+        _updatePlaybackState();
       }),
     );
 
@@ -82,7 +106,7 @@ class TorrentMusicAudioHandler extends BaseAudioHandler
           MediaAction.seekForward,
           MediaAction.seekBackward,
         },
-        processingState: AudioProcessingState.ready,
+        processingState: _currentProcessingState,
         updatePosition: _service.position,
       ),
     );
@@ -95,14 +119,7 @@ class TorrentMusicAudioHandler extends BaseAudioHandler
   Future<void> pause() async => _service.pause();
 
   @override
-  Future<void> stop() async {
-    await _service.stop();
-    playbackState.add(
-      playbackState.value.copyWith(
-        processingState: AudioProcessingState.idle,
-      ),
-    );
-  }
+  Future<void> stop() async => _service.stop();
 
   @override
   Future<void> seek(Duration position) async => _service.seek(position);

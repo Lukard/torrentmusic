@@ -9,6 +9,14 @@ import 'track.dart';
 // Re-export Track so existing UI imports continue to work.
 export 'track.dart';
 
+/// Sentinel used by [PlayerState.copyWith] to distinguish "not provided" from
+/// an explicit `null` value for nullable fields like [currentTrack].
+const _sentinel = _Sentinel();
+
+class _Sentinel {
+  const _Sentinel();
+}
+
 /// Player state exposed to the UI.
 class PlayerState {
   final Track? currentTrack;
@@ -34,7 +42,7 @@ class PlayerState {
   });
 
   PlayerState copyWith({
-    Track? currentTrack,
+    Object? currentTrack = _sentinel,
     bool? isPlaying,
     Duration? position,
     Duration? duration,
@@ -45,7 +53,9 @@ class PlayerState {
     ProcessingState? processingState,
   }) {
     return PlayerState(
-      currentTrack: currentTrack ?? this.currentTrack,
+      currentTrack: currentTrack == _sentinel
+          ? this.currentTrack
+          : currentTrack as Track?,
       isPlaying: isPlaying ?? this.isPlaying,
       position: position ?? this.position,
       duration: duration ?? this.duration,
