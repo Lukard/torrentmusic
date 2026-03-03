@@ -3,8 +3,11 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:torrentmusic/search/indexer_settings.dart';
 import 'package:torrentmusic/search/leet_indexer.dart';
+import 'package:torrentmusic/search/lime_torrents_indexer.dart';
+import 'package:torrentmusic/search/nyaa_indexer.dart';
 import 'package:torrentmusic/search/pirate_bay_indexer.dart';
 import 'package:torrentmusic/search/search_service.dart';
+import 'package:torrentmusic/search/torrent_galaxy_indexer.dart';
 
 void main() {
   group('TorrentSearchService multi-indexer', () {
@@ -132,8 +135,138 @@ void main() {
       expect(results, hasLength(1));
       expect(results[0].title, 'Album FLAC Lossless');
     });
+
+    test('queries Nyaa when nyaaEnabled is true', () async {
+      final nyaaClient = MockClient(
+        (_) async => http.Response(_nyaaSearchHtml, 200),
+      );
+
+      final service = TorrentSearchService(
+        settings: const IndexerSettings(
+          leetEnabled: false,
+          pirateBayEnabled: false,
+          nyaaEnabled: true,
+        ),
+        nyaaIndexer: NyaaIndexer(
+          client: nyaaClient,
+          mirrors: ['https://nyaa.si'],
+        ),
+      );
+
+      final results = await service.search('pink floyd');
+      expect(results, isNotEmpty);
+      expect(results.every((r) => r.source == 'Nyaa'), isTrue);
+    });
+
+    test('queries TorrentGalaxy when torrentGalaxyEnabled is true', () async {
+      final tgClient = MockClient(
+        (_) async => http.Response(_tgSearchHtml, 200),
+      );
+
+      final service = TorrentSearchService(
+        settings: const IndexerSettings(
+          leetEnabled: false,
+          pirateBayEnabled: false,
+          torrentGalaxyEnabled: true,
+        ),
+        torrentGalaxyIndexer: TorrentGalaxyIndexer(
+          client: tgClient,
+          mirrors: ['https://torrentgalaxy.to'],
+        ),
+      );
+
+      final results = await service.search('pink floyd');
+      expect(results, isNotEmpty);
+      expect(results.every((r) => r.source == 'TorrentGalaxy'), isTrue);
+    });
+
+    test('queries LimeTorrents when limeTorrentsEnabled is true', () async {
+      final ltClient = MockClient(
+        (_) async => http.Response(_ltSearchHtml, 200),
+      );
+
+      final service = TorrentSearchService(
+        settings: const IndexerSettings(
+          leetEnabled: false,
+          pirateBayEnabled: false,
+          limeTorrentsEnabled: true,
+        ),
+        limeTorrentsIndexer: LimeTorrentsIndexer(
+          client: ltClient,
+          mirrors: ['https://www.limetorrents.lol'],
+        ),
+      );
+
+      final results = await service.search('pink floyd');
+      expect(results, isNotEmpty);
+      expect(results.every((r) => r.source == 'LimeTorrents'), isTrue);
+    });
   });
 }
+
+// ---------------------------------------------------------------------------
+// HTML fixtures for new indexers
+// ---------------------------------------------------------------------------
+
+const _nyaaSearchHtml = '''
+<html><body>
+<table class="torrent-list table table-striped tbody-highlight">
+  <tbody>
+    <tr class="default">
+      <td colspan="2">
+        <a href="/view/1" title="Pink Floyd - The Wall [FLAC]">Pink Floyd - The Wall [FLAC]</a>
+      </td>
+      <td>
+        <a href="magnet:?xt=urn:btih:ABCDEF1234567890ABCDEF1234567890ABCDEF12&amp;dn=Pink">mag</a>
+      </td>
+      <td>800.5 MiB</td>
+      <td>2024-01-05</td>
+      <td class="text-success">120</td>
+      <td class="text-danger">15</td>
+      <td>500</td>
+    </tr>
+  </tbody>
+</table>
+</body></html>
+''';
+
+const _tgSearchHtml = '''
+<html><body>
+<div class="tgxtable">
+  <div class="tgxtablerow txlight">
+    <div class="tgxtablecell">
+      <a href="/torrent/1/Pink-Floyd-The-Wall"><b>Pink Floyd - The Wall [FLAC]</b></a>
+    </div>
+    <div class="tgxtablecell txlight">700 MB</div>
+    <div class="tgxtablecell" id="seedsn">120</div>
+    <div class="tgxtablecell" id="leechsn">15</div>
+    <div class="tgxtablecell">
+      <a href="magnet:?xt=urn:btih:ABCDEF1234567890ABCDEF1234567890ABCDEF12&amp;dn=Pink">mag</a>
+    </div>
+  </div>
+</div>
+</body></html>
+''';
+
+const _ltSearchHtml = '''
+<html><body>
+<table class="table2">
+  <tbody>
+    <tr>
+      <td class="tdleft">
+        <a href="/Pink-Floyd-The-Wall-torrent-ABCDEF1234567890ABCDEF1234567890ABCDEF12.html">
+          Pink Floyd - The Wall [FLAC]
+        </a>
+      </td>
+      <td class="tdnormal">700 MB</td>
+      <td class="tdnormal">2024-01-05</td>
+      <td class="tdseed">120</td>
+      <td class="tdleech">15</td>
+    </tr>
+  </tbody>
+</table>
+</body></html>
+''';
 
 const _searchPageHtml = '''
 <html>

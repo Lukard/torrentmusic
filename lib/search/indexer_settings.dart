@@ -8,6 +8,9 @@ class IndexerSettings {
   const IndexerSettings({
     this.leetEnabled = true,
     this.pirateBayEnabled = true,
+    this.nyaaEnabled = false,
+    this.torrentGalaxyEnabled = false,
+    this.limeTorrentsEnabled = false,
     this.leetMirrors = kLeetMirrors,
   });
 
@@ -17,17 +20,32 @@ class IndexerSettings {
   /// Whether the PirateBay indexer is enabled.
   final bool pirateBayEnabled;
 
+  /// Whether the Nyaa indexer is enabled.
+  final bool nyaaEnabled;
+
+  /// Whether the TorrentGalaxy indexer is enabled.
+  final bool torrentGalaxyEnabled;
+
+  /// Whether the LimeTorrents indexer is enabled.
+  final bool limeTorrentsEnabled;
+
   /// Ordered list of 1337x mirror URLs.
   final List<String> leetMirrors;
 
   IndexerSettings copyWith({
     bool? leetEnabled,
     bool? pirateBayEnabled,
+    bool? nyaaEnabled,
+    bool? torrentGalaxyEnabled,
+    bool? limeTorrentsEnabled,
     List<String>? leetMirrors,
   }) {
     return IndexerSettings(
       leetEnabled: leetEnabled ?? this.leetEnabled,
       pirateBayEnabled: pirateBayEnabled ?? this.pirateBayEnabled,
+      nyaaEnabled: nyaaEnabled ?? this.nyaaEnabled,
+      torrentGalaxyEnabled: torrentGalaxyEnabled ?? this.torrentGalaxyEnabled,
+      limeTorrentsEnabled: limeTorrentsEnabled ?? this.limeTorrentsEnabled,
       leetMirrors: leetMirrors ?? this.leetMirrors,
     );
   }
@@ -36,6 +54,9 @@ class IndexerSettings {
 // SharedPreferences keys.
 const _kLeetEnabled = 'indexer.leet.enabled';
 const _kPirateBayEnabled = 'indexer.piratebay.enabled';
+const _kNyaaEnabled = 'indexer.nyaa.enabled';
+const _kTorrentGalaxyEnabled = 'indexer.torrentgalaxy.enabled';
+const _kLimeTorrentsEnabled = 'indexer.limetorrents.enabled';
 const _kLeetMirrors = 'indexer.leet.mirrors';
 
 /// Notifier that persists indexer settings to SharedPreferences.
@@ -49,11 +70,18 @@ class IndexerSettingsNotifier extends StateNotifier<IndexerSettings> {
   void _load() {
     final leetEnabled = _prefs.getBool(_kLeetEnabled) ?? true;
     final pirateBayEnabled = _prefs.getBool(_kPirateBayEnabled) ?? false;
+    final nyaaEnabled = _prefs.getBool(_kNyaaEnabled) ?? false;
+    final torrentGalaxyEnabled =
+        _prefs.getBool(_kTorrentGalaxyEnabled) ?? false;
+    final limeTorrentsEnabled = _prefs.getBool(_kLimeTorrentsEnabled) ?? false;
     final mirrors = _prefs.getStringList(_kLeetMirrors) ?? kLeetMirrors;
 
     state = IndexerSettings(
       leetEnabled: leetEnabled,
       pirateBayEnabled: pirateBayEnabled,
+      nyaaEnabled: nyaaEnabled,
+      torrentGalaxyEnabled: torrentGalaxyEnabled,
+      limeTorrentsEnabled: limeTorrentsEnabled,
       leetMirrors: mirrors,
     );
   }
@@ -66,6 +94,21 @@ class IndexerSettingsNotifier extends StateNotifier<IndexerSettings> {
   void setPirateBayEnabled(bool enabled) {
     state = state.copyWith(pirateBayEnabled: enabled);
     _prefs.setBool(_kPirateBayEnabled, enabled);
+  }
+
+  void setNyaaEnabled(bool enabled) {
+    state = state.copyWith(nyaaEnabled: enabled);
+    _prefs.setBool(_kNyaaEnabled, enabled);
+  }
+
+  void setTorrentGalaxyEnabled(bool enabled) {
+    state = state.copyWith(torrentGalaxyEnabled: enabled);
+    _prefs.setBool(_kTorrentGalaxyEnabled, enabled);
+  }
+
+  void setLimeTorrentsEnabled(bool enabled) {
+    state = state.copyWith(limeTorrentsEnabled: enabled);
+    _prefs.setBool(_kLimeTorrentsEnabled, enabled);
   }
 
   void setLeetMirrors(List<String> mirrors) {
