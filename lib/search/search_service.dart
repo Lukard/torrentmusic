@@ -60,17 +60,20 @@ class TorrentSearchService implements SearchService {
   @override
   Future<List<SearchResult>> search(String query, {SearchType? type}) async {
     final futures = <Future<List<SearchResult>>>[];
+    final errors = <String>[];
 
     if (_settings.leetEnabled) {
       final indexer =
           _leetIndexer ?? LeetIndexer(mirrors: _settings.leetMirrors);
-      futures.add(_safeSearch(indexer.search(query), LeetIndexer.sourceName));
+      futures.add(
+        _safeSearch(indexer.search(query), LeetIndexer.sourceName, errors),
+      );
     }
 
     if (_settings.pirateBayEnabled) {
       final indexer = _pirateBayIndexer ?? PirateBayIndexer();
       futures.add(
-        _safeSearch(indexer.search(query), PirateBayIndexer.sourceName),
+        _safeSearch(indexer.search(query), PirateBayIndexer.sourceName, errors),
       );
     }
 
@@ -80,6 +83,7 @@ class TorrentSearchService implements SearchService {
         _safeSearch(
           indexer.search(query),
           SolidtorrentsIndexer.sourceName,
+          errors,
         ),
       );
     }
@@ -87,31 +91,47 @@ class TorrentSearchService implements SearchService {
     if (_settings.bitsearchEnabled) {
       final indexer = _bitsearchIndexer ?? BitsearchIndexer();
       futures.add(
-        _safeSearch(indexer.search(query), BitsearchIndexer.sourceName),
+        _safeSearch(
+          indexer.search(query),
+          BitsearchIndexer.sourceName,
+          errors,
+        ),
       );
     }
 
     if (_settings.btdigEnabled) {
       final indexer = _btdigIndexer ?? BtdigIndexer();
-      futures.add(_safeSearch(indexer.search(query), BtdigIndexer.sourceName));
+      futures.add(
+        _safeSearch(indexer.search(query), BtdigIndexer.sourceName, errors),
+      );
     }
 
     if (_settings.nyaaEnabled) {
       final indexer = _nyaaIndexer ?? NyaaIndexer();
-      futures.add(_safeSearch(indexer.search(query), NyaaIndexer.sourceName));
+      futures.add(
+        _safeSearch(indexer.search(query), NyaaIndexer.sourceName, errors),
+      );
     }
 
     if (_settings.torrentGalaxyEnabled) {
       final indexer = _torrentGalaxyIndexer ?? TorrentGalaxyIndexer();
       futures.add(
-        _safeSearch(indexer.search(query), TorrentGalaxyIndexer.sourceName),
+        _safeSearch(
+          indexer.search(query),
+          TorrentGalaxyIndexer.sourceName,
+          errors,
+        ),
       );
     }
 
     if (_settings.limeTorrentsEnabled) {
       final indexer = _limeTorrentsIndexer ?? LimeTorrentsIndexer();
       futures.add(
-        _safeSearch(indexer.search(query), LimeTorrentsIndexer.sourceName),
+        _safeSearch(
+          indexer.search(query),
+          LimeTorrentsIndexer.sourceName,
+          errors,
+        ),
       );
     }
 
@@ -125,12 +145,11 @@ class TorrentSearchService implements SearchService {
     final allResults = results.expand((r) => r).toList();
 
     // If every indexer returned empty, check if it's because they all failed.
-    if (allResults.isEmpty && _indexerErrors.isNotEmpty) {
-      final sources = _indexerErrors.join(', ');
-      _indexerErrors.clear();
-      throw StateError('Search failed — all indexers errored ($sources).');
+    if (allResults.isEmpty && errors.isNotEmpty) {
+      throw StateError(
+        'Search failed — all indexers errored (${errors.join(', ')}).',
+      );
     }
-    _indexerErrors.clear();
 
     final filtered = allResults.where(isAudioContent).toList();
     final deduped = _deduplicate(filtered);
@@ -141,18 +160,17 @@ class TorrentSearchService implements SearchService {
     return deduped;
   }
 
-  final List<String> _indexerErrors = [];
-
   /// Wraps an indexer search so a single failure or timeout doesn't kill
   /// all results. Each indexer is bounded to [_indexerTimeout].
   Future<List<SearchResult>> _safeSearch(
     Future<List<SearchResult>> search,
     String sourceName,
+    List<String> errors,
   ) async {
     try {
       return await search.timeout(_indexerTimeout);
     } catch (e) {
-      _indexerErrors.add(sourceName);
+      errors.add(sourceName);
       return [];
     }
   }
