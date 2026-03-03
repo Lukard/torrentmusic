@@ -11,7 +11,7 @@ class SolidtorrentsIndexer {
   /// An optional [client] and [baseUrl] can be injected for testing.
   SolidtorrentsIndexer({http.Client? client, String? baseUrl})
       : _client = client ?? http.Client(),
-        _baseUrl = baseUrl ?? 'https://solidtorrents.to';
+        _baseUrl = baseUrl ?? 'https://bitsearch.to';
 
   final http.Client _client;
   final String _baseUrl;

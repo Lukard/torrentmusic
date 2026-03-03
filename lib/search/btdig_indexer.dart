@@ -7,9 +7,9 @@ import 'search_result.dart';
 /// Standard BitTorrent trackers appended to magnet URIs built from
 /// BTDig info hashes.
 const _kTrackers = [
-  'udp://tracker.coppersurfer.tk:6969/announce',
   'udp://tracker.opentrackr.org:1337/announce',
-  'udp://tracker.leechers-paradise.org:6969/announce',
+  'udp://open.tracker.cl:1337/announce',
+  'udp://tracker.torrent.eu.org:451/announce',
 ];
 
 /// Scrapes BTDig and constructs magnet URIs from the embedded info hashes.
