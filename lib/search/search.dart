@@ -5,7 +5,7 @@ export 'bitsearch_indexer.dart';
 export 'btdig_indexer.dart';
 export 'indexer_settings.dart';
 export 'leet_indexer.dart';
-export 'lime_torrents_indexer.dart';
+export 'limetorrents_indexer.dart';
 export 'nyaa_indexer.dart';
 export 'pirate_bay_indexer.dart';
 export 'search_provider.dart';
