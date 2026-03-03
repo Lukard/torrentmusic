@@ -2,7 +2,7 @@ import 'bitsearch_indexer.dart';
 import 'btdig_indexer.dart';
 import 'indexer_settings.dart';
 import 'leet_indexer.dart';
-import 'limetorrents_indexer.dart';
+import 'lime_torrents_indexer.dart';
 import 'nyaa_indexer.dart';
 import 'pirate_bay_indexer.dart';
 import 'search_result.dart';
