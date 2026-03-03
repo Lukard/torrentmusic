@@ -1,7 +1,10 @@
 import 'indexer_settings.dart';
 import 'leet_indexer.dart';
+import 'lime_torrents_indexer.dart';
+import 'nyaa_indexer.dart';
 import 'pirate_bay_indexer.dart';
 import 'search_result.dart';
+import 'torrent_galaxy_indexer.dart';
 
 /// Interface for searching torrent indexers for music content.
 abstract class SearchService {
@@ -17,18 +20,27 @@ class TorrentSearchService implements SearchService {
   /// Creates a [TorrentSearchService].
   ///
   /// When [settings] is provided, enabled indexers are determined from it.
-  /// Optional [leetIndexer] and [pirateBayIndexer] can be injected for testing.
+  /// Optional indexer instances can be injected for testing.
   TorrentSearchService({
     IndexerSettings? settings,
     LeetIndexer? leetIndexer,
     PirateBayIndexer? pirateBayIndexer,
+    NyaaIndexer? nyaaIndexer,
+    TorrentGalaxyIndexer? torrentGalaxyIndexer,
+    LimeTorrentsIndexer? limeTorrentsIndexer,
   })  : _settings = settings ?? const IndexerSettings(),
         _leetIndexer = leetIndexer,
-        _pirateBayIndexer = pirateBayIndexer;
+        _pirateBayIndexer = pirateBayIndexer,
+        _nyaaIndexer = nyaaIndexer,
+        _torrentGalaxyIndexer = torrentGalaxyIndexer,
+        _limeTorrentsIndexer = limeTorrentsIndexer;
 
   final IndexerSettings _settings;
   final LeetIndexer? _leetIndexer;
   final PirateBayIndexer? _pirateBayIndexer;
+  final NyaaIndexer? _nyaaIndexer;
+  final TorrentGalaxyIndexer? _torrentGalaxyIndexer;
+  final LimeTorrentsIndexer? _limeTorrentsIndexer;
 
   @override
   Future<List<SearchResult>> search(String query, {SearchType? type}) async {
@@ -44,6 +56,25 @@ class TorrentSearchService implements SearchService {
       final indexer = _pirateBayIndexer ?? PirateBayIndexer();
       futures.add(
         _safeSearch(indexer.search(query), PirateBayIndexer.sourceName),
+      );
+    }
+
+    if (_settings.nyaaEnabled) {
+      final indexer = _nyaaIndexer ?? NyaaIndexer();
+      futures.add(_safeSearch(indexer.search(query), NyaaIndexer.sourceName));
+    }
+
+    if (_settings.torrentGalaxyEnabled) {
+      final indexer = _torrentGalaxyIndexer ?? TorrentGalaxyIndexer();
+      futures.add(
+        _safeSearch(indexer.search(query), TorrentGalaxyIndexer.sourceName),
+      );
+    }
+
+    if (_settings.limeTorrentsEnabled) {
+      final indexer = _limeTorrentsIndexer ?? LimeTorrentsIndexer();
+      futures.add(
+        _safeSearch(indexer.search(query), LimeTorrentsIndexer.sourceName),
       );
     }
 
