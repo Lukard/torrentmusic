@@ -12,12 +12,16 @@ class SearchResult {
     required this.sizeBytes,
     required this.source,
     this.category,
+    this.thumbnailUrl,
   });
 
   /// Display title of the torrent.
   final String title;
 
   /// Magnet URI used to start the torrent download.
+  ///
+  /// For YouTube results this is a `youtube://<videoId>` URI — the player
+  /// resolves the actual audio stream URL lazily at play time.
   final String magnetUri;
 
   /// Number of seeders.
@@ -34,6 +38,9 @@ class SearchResult {
 
   /// Optional category tag (e.g. "Music", "Lossless").
   final String? category;
+
+  /// Optional thumbnail URL (used by YouTube results).
+  final String? thumbnailUrl;
 
   @override
   String toString() =>

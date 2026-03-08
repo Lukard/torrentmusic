@@ -13,3 +13,4 @@ export 'search_result.dart';
 export 'search_service.dart';
 export 'solidtorrents_indexer.dart';
 export 'torrent_galaxy_indexer.dart';
+export 'youtube_source.dart';

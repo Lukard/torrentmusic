@@ -37,6 +37,7 @@ void main() {
           nyaaEnabled: false,
           torrentGalaxyEnabled: false,
           limeTorrentsEnabled: false,
+          youtubeEnabled: false,
         ),
         leetIndexer:
             LeetIndexer(client: leetClient, baseUrl: 'https://1337x.to'),
@@ -74,6 +75,7 @@ void main() {
           nyaaEnabled: false,
           torrentGalaxyEnabled: false,
           limeTorrentsEnabled: false,
+          youtubeEnabled: false,
         ),
         leetIndexer:
             LeetIndexer(client: leetClient, baseUrl: 'https://1337x.to'),
@@ -95,6 +97,7 @@ void main() {
           nyaaEnabled: false,
           torrentGalaxyEnabled: false,
           limeTorrentsEnabled: false,
+          youtubeEnabled: false,
         ),
       );
 
@@ -128,6 +131,7 @@ void main() {
           nyaaEnabled: false,
           torrentGalaxyEnabled: false,
           limeTorrentsEnabled: false,
+          youtubeEnabled: false,
         ),
         pirateBayIndexer:
             PirateBayIndexer(client: pbClient, baseUrl: 'https://apibay.org'),
@@ -161,6 +165,7 @@ void main() {
           nyaaEnabled: false,
           torrentGalaxyEnabled: false,
           limeTorrentsEnabled: false,
+          youtubeEnabled: false,
         ),
         pirateBayIndexer:
             PirateBayIndexer(client: pbClient, baseUrl: 'https://apibay.org'),
@@ -193,6 +198,7 @@ void main() {
           nyaaEnabled: false,
           torrentGalaxyEnabled: false,
           limeTorrentsEnabled: false,
+          youtubeEnabled: false,
         ),
         pirateBayIndexer:
             PirateBayIndexer(client: pbClient, baseUrl: 'https://apibay.org'),
@@ -223,6 +229,7 @@ void main() {
           nyaaEnabled: false,
           torrentGalaxyEnabled: false,
           limeTorrentsEnabled: false,
+          youtubeEnabled: false,
         ),
         pirateBayIndexer:
             PirateBayIndexer(client: pbClient, baseUrl: 'https://apibay.org'),
@@ -243,6 +250,7 @@ void main() {
           leetEnabled: false,
           pirateBayEnabled: false,
           nyaaEnabled: true,
+          youtubeEnabled: false,
         ),
         nyaaIndexer: NyaaIndexer(
           client: nyaaClient,
@@ -265,6 +273,7 @@ void main() {
           leetEnabled: false,
           pirateBayEnabled: false,
           torrentGalaxyEnabled: true,
+          youtubeEnabled: false,
         ),
         torrentGalaxyIndexer: TorrentGalaxyIndexer(
           client: tgClient,
@@ -287,6 +296,7 @@ void main() {
           leetEnabled: false,
           pirateBayEnabled: false,
           limeTorrentsEnabled: true,
+          youtubeEnabled: false,
         ),
         limeTorrentsIndexer: LimeTorrentsIndexer(
           client: ltClient,

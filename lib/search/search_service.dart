@@ -8,6 +8,7 @@ import 'pirate_bay_indexer.dart';
 import 'search_result.dart';
 import 'solidtorrents_indexer.dart';
 import 'torrent_galaxy_indexer.dart';
+import 'youtube_source.dart';
 
 /// Interface for searching torrent indexers for music content.
 abstract class SearchService {
@@ -34,6 +35,7 @@ class TorrentSearchService implements SearchService {
     NyaaIndexer? nyaaIndexer,
     TorrentGalaxyIndexer? torrentGalaxyIndexer,
     LimeTorrentsIndexer? limeTorrentsIndexer,
+    YouTubeSource? youtubeSource,
   })  : _settings = settings ?? const IndexerSettings(),
         _leetIndexer = leetIndexer,
         _pirateBayIndexer = pirateBayIndexer,
@@ -42,7 +44,8 @@ class TorrentSearchService implements SearchService {
         _btdigIndexer = btdigIndexer,
         _nyaaIndexer = nyaaIndexer,
         _torrentGalaxyIndexer = torrentGalaxyIndexer,
-        _limeTorrentsIndexer = limeTorrentsIndexer;
+        _limeTorrentsIndexer = limeTorrentsIndexer,
+        _youtubeSource = youtubeSource;
 
   final IndexerSettings _settings;
   final LeetIndexer? _leetIndexer;
@@ -53,6 +56,7 @@ class TorrentSearchService implements SearchService {
   final NyaaIndexer? _nyaaIndexer;
   final TorrentGalaxyIndexer? _torrentGalaxyIndexer;
   final LimeTorrentsIndexer? _limeTorrentsIndexer;
+  final YouTubeSource? _youtubeSource;
 
   /// Per-indexer search timeout.
   static const _indexerTimeout = Duration(seconds: 15);
@@ -130,6 +134,17 @@ class TorrentSearchService implements SearchService {
         _safeSearch(
           indexer.search(query),
           LimeTorrentsIndexer.sourceName,
+          errors,
+        ),
+      );
+    }
+
+    if (_settings.youtubeEnabled) {
+      final source = _youtubeSource ?? YouTubeSource();
+      futures.add(
+        _safeSearch(
+          source.search(query),
+          YouTubeSource.sourceName,
           errors,
         ),
       );

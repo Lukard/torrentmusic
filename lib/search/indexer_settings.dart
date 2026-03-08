@@ -14,6 +14,7 @@ class IndexerSettings {
     this.nyaaEnabled = true,
     this.torrentGalaxyEnabled = true,
     this.limeTorrentsEnabled = true,
+    this.youtubeEnabled = true,
     this.leetMirrors = kLeetMirrors,
   });
 
@@ -41,6 +42,9 @@ class IndexerSettings {
   /// Whether the LimeTorrents indexer is enabled.
   final bool limeTorrentsEnabled;
 
+  /// Whether the YouTube source is enabled.
+  final bool youtubeEnabled;
+
   /// Ordered list of 1337x mirror URLs.
   final List<String> leetMirrors;
 
@@ -53,6 +57,7 @@ class IndexerSettings {
     bool? nyaaEnabled,
     bool? torrentGalaxyEnabled,
     bool? limeTorrentsEnabled,
+    bool? youtubeEnabled,
     List<String>? leetMirrors,
   }) {
     return IndexerSettings(
@@ -64,6 +69,7 @@ class IndexerSettings {
       nyaaEnabled: nyaaEnabled ?? this.nyaaEnabled,
       torrentGalaxyEnabled: torrentGalaxyEnabled ?? this.torrentGalaxyEnabled,
       limeTorrentsEnabled: limeTorrentsEnabled ?? this.limeTorrentsEnabled,
+      youtubeEnabled: youtubeEnabled ?? this.youtubeEnabled,
       leetMirrors: leetMirrors ?? this.leetMirrors,
     );
   }
@@ -78,6 +84,7 @@ const _kBtdigEnabled = 'indexer.btdig.enabled';
 const _kNyaaEnabled = 'indexer.nyaa.enabled';
 const _kTorrentGalaxyEnabled = 'indexer.torrentgalaxy.enabled';
 const _kLimeTorrentsEnabled = 'indexer.limetorrents.enabled';
+const _kYoutubeEnabled = 'indexer.youtube.enabled';
 const _kLeetMirrors = 'indexer.leet.mirrors';
 
 /// Notifier that persists indexer settings to SharedPreferences.
@@ -98,6 +105,7 @@ class IndexerSettingsNotifier extends StateNotifier<IndexerSettings> {
       nyaaEnabled: _prefs.getBool(_kNyaaEnabled) ?? true,
       torrentGalaxyEnabled: _prefs.getBool(_kTorrentGalaxyEnabled) ?? true,
       limeTorrentsEnabled: _prefs.getBool(_kLimeTorrentsEnabled) ?? true,
+      youtubeEnabled: _prefs.getBool(_kYoutubeEnabled) ?? true,
       leetMirrors: _prefs.getStringList(_kLeetMirrors) ?? kLeetMirrors,
     );
   }
@@ -140,6 +148,11 @@ class IndexerSettingsNotifier extends StateNotifier<IndexerSettings> {
   void setLimeTorrentsEnabled(bool enabled) {
     state = state.copyWith(limeTorrentsEnabled: enabled);
     _prefs.setBool(_kLimeTorrentsEnabled, enabled);
+  }
+
+  void setYoutubeEnabled(bool enabled) {
+    state = state.copyWith(youtubeEnabled: enabled);
+    _prefs.setBool(_kYoutubeEnabled, enabled);
   }
 
   void setLeetMirrors(List<String> mirrors) {
