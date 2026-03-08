@@ -7,6 +7,8 @@ import 'nyaa_indexer.dart';
 import 'pirate_bay_indexer.dart';
 import 'search_result.dart';
 import 'solidtorrents_indexer.dart';
+import 'spotify_config.dart';
+import 'spotify_source.dart';
 import 'torrent_galaxy_indexer.dart';
 import 'youtube_source.dart';
 
@@ -36,6 +38,7 @@ class TorrentSearchService implements SearchService {
     TorrentGalaxyIndexer? torrentGalaxyIndexer,
     LimeTorrentsIndexer? limeTorrentsIndexer,
     YouTubeSource? youtubeSource,
+    SpotifySource? spotifySource,
   })  : _settings = settings ?? const IndexerSettings(),
         _leetIndexer = leetIndexer,
         _pirateBayIndexer = pirateBayIndexer,
@@ -45,7 +48,14 @@ class TorrentSearchService implements SearchService {
         _nyaaIndexer = nyaaIndexer,
         _torrentGalaxyIndexer = torrentGalaxyIndexer,
         _limeTorrentsIndexer = limeTorrentsIndexer,
-        _youtubeSource = youtubeSource;
+        _youtubeSource = youtubeSource,
+        _spotifySource = spotifySource ??
+            SpotifySource(
+              config: SpotifyConfig(
+                clientId: settings?.spotifyClientId ?? '',
+                clientSecret: settings?.spotifyClientSecret ?? '',
+              ),
+            );
 
   final IndexerSettings _settings;
   final LeetIndexer? _leetIndexer;
@@ -57,6 +67,7 @@ class TorrentSearchService implements SearchService {
   final TorrentGalaxyIndexer? _torrentGalaxyIndexer;
   final LimeTorrentsIndexer? _limeTorrentsIndexer;
   final YouTubeSource? _youtubeSource;
+  final SpotifySource _spotifySource;
 
   /// Per-indexer search timeout.
   static const _indexerTimeout = Duration(seconds: 15);
@@ -145,6 +156,16 @@ class TorrentSearchService implements SearchService {
         _safeSearch(
           source.search(query),
           YouTubeSource.sourceName,
+          errors,
+        ),
+      );
+    }
+
+    if (_settings.spotifyEnabled) {
+      futures.add(
+        _safeSearch(
+          _spotifySource.search(query),
+          SpotifySource.sourceName,
           errors,
         ),
       );

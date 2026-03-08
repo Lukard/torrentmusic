@@ -12,5 +12,7 @@ export 'search_provider.dart';
 export 'search_result.dart';
 export 'search_service.dart';
 export 'solidtorrents_indexer.dart';
+export 'spotify_config.dart';
+export 'spotify_source.dart';
 export 'torrent_galaxy_indexer.dart';
 export 'youtube_source.dart';

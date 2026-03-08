@@ -16,6 +16,9 @@ class IndexerSettings {
     this.limeTorrentsEnabled = true,
     this.youtubeEnabled = true,
     this.leetMirrors = kLeetMirrors,
+    this.spotifyEnabled = false,
+    this.spotifyClientId = '',
+    this.spotifyClientSecret = '',
   });
 
   /// Whether the 1337x indexer is enabled.
@@ -48,6 +51,17 @@ class IndexerSettings {
   /// Ordered list of 1337x mirror URLs.
   final List<String> leetMirrors;
 
+  /// Whether the Spotify metadata source is enabled.
+  ///
+  /// Defaults to `false` because it requires API credentials.
+  final bool spotifyEnabled;
+
+  /// Spotify application client ID (from developer.spotify.com/dashboard).
+  final String spotifyClientId;
+
+  /// Spotify application client secret (from developer.spotify.com/dashboard).
+  final String spotifyClientSecret;
+
   IndexerSettings copyWith({
     bool? leetEnabled,
     bool? pirateBayEnabled,
@@ -59,6 +73,9 @@ class IndexerSettings {
     bool? limeTorrentsEnabled,
     bool? youtubeEnabled,
     List<String>? leetMirrors,
+    bool? spotifyEnabled,
+    String? spotifyClientId,
+    String? spotifyClientSecret,
   }) {
     return IndexerSettings(
       leetEnabled: leetEnabled ?? this.leetEnabled,
@@ -71,6 +88,9 @@ class IndexerSettings {
       limeTorrentsEnabled: limeTorrentsEnabled ?? this.limeTorrentsEnabled,
       youtubeEnabled: youtubeEnabled ?? this.youtubeEnabled,
       leetMirrors: leetMirrors ?? this.leetMirrors,
+      spotifyEnabled: spotifyEnabled ?? this.spotifyEnabled,
+      spotifyClientId: spotifyClientId ?? this.spotifyClientId,
+      spotifyClientSecret: spotifyClientSecret ?? this.spotifyClientSecret,
     );
   }
 }
@@ -86,6 +106,9 @@ const _kTorrentGalaxyEnabled = 'indexer.torrentgalaxy.enabled';
 const _kLimeTorrentsEnabled = 'indexer.limetorrents.enabled';
 const _kYoutubeEnabled = 'indexer.youtube.enabled';
 const _kLeetMirrors = 'indexer.leet.mirrors';
+const _kSpotifyEnabled = 'indexer.spotify.enabled';
+const _kSpotifyClientId = 'indexer.spotify.clientId';
+const _kSpotifyClientSecret = 'indexer.spotify.clientSecret';
 
 /// Notifier that persists indexer settings to SharedPreferences.
 class IndexerSettingsNotifier extends StateNotifier<IndexerSettings> {
@@ -107,6 +130,9 @@ class IndexerSettingsNotifier extends StateNotifier<IndexerSettings> {
       limeTorrentsEnabled: _prefs.getBool(_kLimeTorrentsEnabled) ?? true,
       youtubeEnabled: _prefs.getBool(_kYoutubeEnabled) ?? true,
       leetMirrors: _prefs.getStringList(_kLeetMirrors) ?? kLeetMirrors,
+      spotifyEnabled: _prefs.getBool(_kSpotifyEnabled) ?? false,
+      spotifyClientId: _prefs.getString(_kSpotifyClientId) ?? '',
+      spotifyClientSecret: _prefs.getString(_kSpotifyClientSecret) ?? '',
     );
   }
 
@@ -158,6 +184,21 @@ class IndexerSettingsNotifier extends StateNotifier<IndexerSettings> {
   void setLeetMirrors(List<String> mirrors) {
     state = state.copyWith(leetMirrors: mirrors);
     _prefs.setStringList(_kLeetMirrors, mirrors);
+  }
+
+  void setSpotifyEnabled(bool enabled) {
+    state = state.copyWith(spotifyEnabled: enabled);
+    _prefs.setBool(_kSpotifyEnabled, enabled);
+  }
+
+  void setSpotifyClientId(String clientId) {
+    state = state.copyWith(spotifyClientId: clientId);
+    _prefs.setString(_kSpotifyClientId, clientId);
+  }
+
+  void setSpotifyClientSecret(String clientSecret) {
+    state = state.copyWith(spotifyClientSecret: clientSecret);
+    _prefs.setString(_kSpotifyClientSecret, clientSecret);
   }
 }
 
