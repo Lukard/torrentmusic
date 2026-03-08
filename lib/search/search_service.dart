@@ -7,6 +7,8 @@ import 'nyaa_indexer.dart';
 import 'pirate_bay_indexer.dart';
 import 'search_result.dart';
 import 'solidtorrents_indexer.dart';
+import 'spotify_config.dart';
+import 'spotify_source.dart';
 import 'torrent_galaxy_indexer.dart';
 
 /// Interface for searching torrent indexers for music content.
@@ -34,6 +36,7 @@ class TorrentSearchService implements SearchService {
     NyaaIndexer? nyaaIndexer,
     TorrentGalaxyIndexer? torrentGalaxyIndexer,
     LimeTorrentsIndexer? limeTorrentsIndexer,
+    SpotifySource? spotifySource,
   })  : _settings = settings ?? const IndexerSettings(),
         _leetIndexer = leetIndexer,
         _pirateBayIndexer = pirateBayIndexer,
@@ -42,7 +45,14 @@ class TorrentSearchService implements SearchService {
         _btdigIndexer = btdigIndexer,
         _nyaaIndexer = nyaaIndexer,
         _torrentGalaxyIndexer = torrentGalaxyIndexer,
-        _limeTorrentsIndexer = limeTorrentsIndexer;
+        _limeTorrentsIndexer = limeTorrentsIndexer,
+        _spotifySource = spotifySource ??
+            SpotifySource(
+              config: SpotifyConfig(
+                clientId: settings?.spotifyClientId ?? '',
+                clientSecret: settings?.spotifyClientSecret ?? '',
+              ),
+            );
 
   final IndexerSettings _settings;
   final LeetIndexer? _leetIndexer;
@@ -53,6 +63,7 @@ class TorrentSearchService implements SearchService {
   final NyaaIndexer? _nyaaIndexer;
   final TorrentGalaxyIndexer? _torrentGalaxyIndexer;
   final LimeTorrentsIndexer? _limeTorrentsIndexer;
+  final SpotifySource _spotifySource;
 
   /// Per-indexer search timeout.
   static const _indexerTimeout = Duration(seconds: 15);
@@ -130,6 +141,16 @@ class TorrentSearchService implements SearchService {
         _safeSearch(
           indexer.search(query),
           LimeTorrentsIndexer.sourceName,
+          errors,
+        ),
+      );
+    }
+
+    if (_settings.spotifyEnabled) {
+      futures.add(
+        _safeSearch(
+          _spotifySource.search(query),
+          SpotifySource.sourceName,
           errors,
         ),
       );
