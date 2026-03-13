@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart' show protected, visibleForTesting;
 import 'package:just_audio/just_audio.dart';
 
+import 'audio_proxy_server.dart';
 import 'track.dart';
 
 /// Repeat mode for playback queue.
@@ -48,6 +49,7 @@ class QueueState {
 /// Supports mp3, flac, ogg, and wav formats.
 class AudioPlayerService {
   final AudioPlayer _player;
+  final AudioProxyServer _proxyServer;
 
   /// Queue of tracks.
   List<Track> _queue = [];
@@ -67,9 +69,10 @@ class AudioPlayerService {
 
   /// Create a new [AudioPlayerService].
   ///
-  /// An optional [AudioPlayer] can be injected for testing.
-  AudioPlayerService({AudioPlayer? player})
-      : _player = player ?? AudioPlayer() {
+  /// Optional [player] and [proxyServer] can be injected for testing.
+  AudioPlayerService({AudioPlayer? player, AudioProxyServer? proxyServer})
+      : _player = player ?? AudioPlayer(),
+        _proxyServer = proxyServer ?? AudioProxyServer() {
     _listenForTrackCompletion();
   }
 
@@ -129,7 +132,8 @@ class AudioPlayerService {
     }
     try {
       if (remoteUrl != null) {
-        await _player.setUrl(remoteUrl);
+        await _proxyServer.start();
+        await _player.setUrl(_proxyServer.proxyUrl(remoteUrl));
       } else {
         await _player.setFilePath(path!);
       }
@@ -309,7 +313,8 @@ class AudioPlayerService {
     }
     try {
       if (track.url != null) {
-        await _player.setUrl(track.url!);
+        await _proxyServer.start();
+        await _player.setUrl(_proxyServer.proxyUrl(track.url!));
       } else {
         await _player.setFilePath(track.filePath!);
       }
