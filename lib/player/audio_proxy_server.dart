@@ -135,9 +135,12 @@ class AudioProxyServer {
 
       await request.response.addStream(incoming);
       await request.response.close();
-    } catch (_) {
+    } catch (e) {
+      // ignore: avoid_print
+      print('AudioProxyServer error for $urlParam: $e');
       try {
         request.response.statusCode = HttpStatus.badGateway;
+        request.response.write('Proxy error: $e');
         await request.response.close();
       } catch (_) {
         // Response already partially sent — nothing we can do.
