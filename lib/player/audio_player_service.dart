@@ -121,13 +121,18 @@ class AudioPlayerService {
   ///
   /// The file may still be downloading (progressive/streaming playback).
   /// Supported formats: mp3, flac, ogg, wav.
-  Future<void> play(Track track, {String? filePath}) async {
+  Future<void> play(Track track, {String? filePath, String? url}) async {
     final path = filePath ?? track.filePath;
-    if (path == null) {
-      throw ArgumentError('No file path available for track: ${track.title}');
+    final remoteUrl = url ?? track.url;
+    if (path == null && remoteUrl == null) {
+      throw ArgumentError('No file path or URL available for track: ${track.title}');
     }
     try {
-      await _player.setFilePath(path);
+      if (remoteUrl != null) {
+        await _player.setUrl(remoteUrl);
+      } else {
+        await _player.setFilePath(path!);
+      }
       await _player.play();
     } catch (e) {
       _errorController.add('Failed to play "${track.title}": $e');
@@ -169,12 +174,12 @@ class AudioPlayerService {
   }
 
   /// Play a single track, replacing the queue with just that track.
-  Future<void> playTrack(Track track, {String? filePath}) async {
+  Future<void> playTrack(Track track, {String? filePath, String? url}) async {
     _queue = [track];
     _currentIndex = 0;
     _rebuildShuffleOrder();
     _emitQueueState();
-    await play(track, filePath: filePath);
+    await play(track, filePath: filePath, url: url);
   }
 
   /// Add a track to the end of the queue.
@@ -298,12 +303,16 @@ class AudioPlayerService {
   Future<void> playCurrentTrack() async {
     if (_currentIndex < 0 || _currentIndex >= _queue.length) return;
     final track = _queue[_currentIndex];
-    if (track.filePath == null) {
-      _errorController.add('No file path for "${track.title}"');
+    if (track.url == null && track.filePath == null) {
+      _errorController.add('No file path or URL for "${track.title}"');
       return;
     }
     try {
-      await _player.setFilePath(track.filePath!);
+      if (track.url != null) {
+        await _player.setUrl(track.url!);
+      } else {
+        await _player.setFilePath(track.filePath!);
+      }
       await _player.play();
     } catch (e) {
       _errorController.add('Failed to play "${track.title}": $e');

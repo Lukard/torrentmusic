@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../player/audio_player_service.dart';
 import '../player/track.dart';
 import '../search/search_result.dart';
+import '../search/youtube_source.dart';
 import 'torrent_engine.dart';
 
 /// Orchestration state for a single track being prepared for playback.
@@ -82,10 +83,14 @@ class PlaybackOrchestrator {
 
   final _torrentStatusController = StreamController<TorrentStatus>.broadcast();
 
+  /// YouTube delegate for resolving audio stream URLs.
+  final YoutubeExplodeDelegate? _youtubeDelegate;
+
   PlaybackOrchestrator({
     required this.engine,
     required this.playerService,
-  });
+    YoutubeExplodeDelegate? youtubeDelegate,
+  }) : _youtubeDelegate = youtubeDelegate;
 
   /// Stream of preparation state changes (for UI feedback).
   Stream<PlaybackPreparation> get preparationStream =>
@@ -102,7 +107,20 @@ class PlaybackOrchestrator {
   ///
   /// Adds the magnet to the torrent engine, waits for enough buffer,
   /// then starts audio playback.
+  /// Returns `true` if the search result is from YouTube.
+  static bool isYouTubeResult(SearchResult result) =>
+      result.magnetUri.startsWith('youtube://');
+
+  /// Extracts the YouTube video ID from a `youtube://VIDEO_ID` URI.
+  static String extractYouTubeVideoId(String uri) =>
+      uri.replaceFirst('youtube://', '');
+
   Future<void> playSearchResult(SearchResult result) async {
+    // YouTube results bypass the torrent engine entirely.
+    if (isYouTubeResult(result)) {
+      return _playYouTubeResult(result);
+    }
+
     final track = searchResultToTrack(result);
 
     emitPreparation(track, PlaybackPreparationState.addingTorrent);
@@ -174,6 +192,10 @@ class PlaybackOrchestrator {
   ///
   /// If nothing is playing, this will also begin playback.
   Future<void> addToQueue(SearchResult result) async {
+    if (isYouTubeResult(result)) {
+      return _addYouTubeToQueue(result);
+    }
+
     final track = searchResultToTrack(result);
 
     try {
@@ -227,6 +249,79 @@ class PlaybackOrchestrator {
   /// Attempts to parse "Artist - Title" from [SearchResult.title].
   /// Falls back to "Unknown Artist" if no separator is found.
   @visibleForTesting
+  /// Adds a YouTube result to the queue, resolving the audio stream URL first.
+  Future<void> _addYouTubeToQueue(SearchResult result) async {
+    final track = searchResultToTrack(result);
+    try {
+      final delegate = _youtubeDelegate ?? YoutubeExplodeDelegate();
+      final videoId = extractYouTubeVideoId(result.magnetUri);
+      final audioUrl = await delegate.resolveAudioStreamUrl(videoId);
+
+      if (audioUrl == null) {
+        emitPreparation(
+          track,
+          PlaybackPreparationState.error,
+          errorMessage: 'Could not resolve YouTube audio stream',
+        );
+        return;
+      }
+
+      final trackWithUrl = track.copyWith(url: audioUrl.toString());
+      final isQueueEmpty = playerService.queueState.tracks.isEmpty;
+      playerService.addToQueue(trackWithUrl);
+
+      if (isQueueEmpty) {
+        await playerService.play(trackWithUrl, url: audioUrl.toString());
+      }
+    } catch (e) {
+      emitPreparation(
+        track,
+        PlaybackPreparationState.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  /// Plays a YouTube result by resolving the audio stream URL and playing
+  /// it directly via just_audio (no torrent engine).
+  Future<void> _playYouTubeResult(SearchResult result) async {
+    final track = searchResultToTrack(result);
+
+    emitPreparation(track, PlaybackPreparationState.buffering);
+
+    try {
+      final delegate = _youtubeDelegate ?? YoutubeExplodeDelegate();
+      final videoId = extractYouTubeVideoId(result.magnetUri);
+      final audioUrl = await delegate.resolveAudioStreamUrl(videoId);
+
+      if (audioUrl == null) {
+        emitPreparation(
+          track,
+          PlaybackPreparationState.error,
+          errorMessage: 'Could not resolve audio stream for YouTube video',
+        );
+        return;
+      }
+
+      final trackWithUrl = track.copyWith(url: audioUrl.toString());
+
+      emitPreparation(
+        trackWithUrl,
+        PlaybackPreparationState.startingPlayback,
+      );
+
+      await playerService.playTrack(trackWithUrl, url: audioUrl.toString());
+
+      emitPreparation(trackWithUrl, PlaybackPreparationState.playing);
+    } catch (e) {
+      emitPreparation(
+        track,
+        PlaybackPreparationState.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
   Track searchResultToTrack(SearchResult result) {
     final parts = _parseArtistTitle(result.title);
     return Track(

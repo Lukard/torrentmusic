@@ -26,6 +26,9 @@ class Track {
   /// URL for album artwork.
   final String? artworkUrl;
 
+  /// Remote audio stream URL (for YouTube, Spotify preview, etc.).
+  final String? url;
+
   const Track({
     required this.id,
     required this.title,
@@ -40,6 +43,7 @@ class Track {
     this.bitrate,
     this.format,
     this.artworkUrl,
+    this.url,
   });
 
   Track copyWith({
@@ -56,6 +60,7 @@ class Track {
     int? bitrate,
     String? format,
     String? artworkUrl,
+    String? url,
   }) {
     return Track(
       id: id ?? this.id,
@@ -71,6 +76,7 @@ class Track {
       bitrate: bitrate ?? this.bitrate,
       format: format ?? this.format,
       artworkUrl: artworkUrl ?? this.artworkUrl,
+      url: url ?? this.url,
     );
   }
 
