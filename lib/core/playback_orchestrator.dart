@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import '../player/audio_player_service.dart';
 import '../player/track.dart';
 import '../search/search_result.dart';
-import '../search/youtube_source.dart';
 import 'torrent_engine.dart';
 
 /// Orchestration state for a single track being prepared for playback.
@@ -83,14 +82,10 @@ class PlaybackOrchestrator {
 
   final _torrentStatusController = StreamController<TorrentStatus>.broadcast();
 
-  /// YouTube delegate for resolving audio stream URLs.
-  final YoutubeExplodeDelegate? _youtubeDelegate;
-
   PlaybackOrchestrator({
     required this.engine,
     required this.playerService,
-    YoutubeExplodeDelegate? youtubeDelegate,
-  }) : _youtubeDelegate = youtubeDelegate;
+  });
 
   /// Stream of preparation state changes (for UI feedback).
   Stream<PlaybackPreparation> get preparationStream =>
@@ -249,29 +244,17 @@ class PlaybackOrchestrator {
   /// Attempts to parse "Artist - Title" from [SearchResult.title].
   /// Falls back to "Unknown Artist" if no separator is found.
   @visibleForTesting
-  /// Adds a YouTube result to the queue, resolving the audio stream URL first.
+  /// Adds a YouTube result to the queue using a `youtube://VIDEO_ID` URL.
   Future<void> _addYouTubeToQueue(SearchResult result) async {
     final track = searchResultToTrack(result);
     try {
-      final delegate = _youtubeDelegate ?? YoutubeExplodeDelegate();
-      final videoId = extractYouTubeVideoId(result.magnetUri);
-      final audioUrl = await delegate.resolveAudioStreamUrl(videoId);
-
-      if (audioUrl == null) {
-        emitPreparation(
-          track,
-          PlaybackPreparationState.error,
-          errorMessage: 'Could not resolve YouTube audio stream',
-        );
-        return;
-      }
-
-      final trackWithUrl = track.copyWith(url: audioUrl.toString());
+      final youtubeUrl = result.magnetUri; // already "youtube://VIDEO_ID"
+      final trackWithUrl = track.copyWith(url: youtubeUrl);
       final isQueueEmpty = playerService.queueState.tracks.isEmpty;
       playerService.addToQueue(trackWithUrl);
 
       if (isQueueEmpty) {
-        await playerService.play(trackWithUrl, url: audioUrl.toString());
+        await playerService.play(trackWithUrl, url: youtubeUrl);
       }
     } catch (e) {
       emitPreparation(
@@ -282,35 +265,22 @@ class PlaybackOrchestrator {
     }
   }
 
-  /// Plays a YouTube result by resolving the audio stream URL and playing
-  /// it directly via just_audio (no torrent engine).
+  /// Plays a YouTube result via YouTubeAudioSource (no URL resolution needed).
   Future<void> _playYouTubeResult(SearchResult result) async {
     final track = searchResultToTrack(result);
 
     emitPreparation(track, PlaybackPreparationState.buffering);
 
     try {
-      final delegate = _youtubeDelegate ?? YoutubeExplodeDelegate();
-      final videoId = extractYouTubeVideoId(result.magnetUri);
-      final audioUrl = await delegate.resolveAudioStreamUrl(videoId);
-
-      if (audioUrl == null) {
-        emitPreparation(
-          track,
-          PlaybackPreparationState.error,
-          errorMessage: 'Could not resolve audio stream for YouTube video',
-        );
-        return;
-      }
-
-      final trackWithUrl = track.copyWith(url: audioUrl.toString());
+      final youtubeUrl = result.magnetUri; // "youtube://VIDEO_ID"
+      final trackWithUrl = track.copyWith(url: youtubeUrl);
 
       emitPreparation(
         trackWithUrl,
         PlaybackPreparationState.startingPlayback,
       );
 
-      await playerService.playTrack(trackWithUrl, url: audioUrl.toString());
+      await playerService.playTrack(trackWithUrl, url: youtubeUrl);
 
       emitPreparation(trackWithUrl, PlaybackPreparationState.playing);
     } catch (e) {

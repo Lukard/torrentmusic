@@ -6,6 +6,7 @@ import 'package:just_audio/just_audio.dart';
 
 import 'audio_proxy_server.dart';
 import 'track.dart';
+import 'youtube_audio_source.dart';
 
 /// Repeat mode for playback queue.
 enum RepeatMode { off, one, all }
@@ -131,7 +132,10 @@ class AudioPlayerService {
       throw ArgumentError('No file path or URL available for track: ${track.title}');
     }
     try {
-      if (remoteUrl != null) {
+      if (remoteUrl != null && remoteUrl.startsWith('youtube://')) {
+        final videoId = remoteUrl.replaceFirst('youtube://', '');
+        await _player.setAudioSource(YouTubeAudioSource(videoId));
+      } else if (remoteUrl != null) {
         await _proxyServer.start();
         await _player.setUrl(_proxyServer.proxyUrl(remoteUrl));
       } else {
@@ -312,7 +316,10 @@ class AudioPlayerService {
       return;
     }
     try {
-      if (track.url != null) {
+      if (track.url != null && track.url!.startsWith('youtube://')) {
+        final videoId = track.url!.replaceFirst('youtube://', '');
+        await _player.setAudioSource(YouTubeAudioSource(videoId));
+      } else if (track.url != null) {
         await _proxyServer.start();
         await _player.setUrl(_proxyServer.proxyUrl(track.url!));
       } else {
